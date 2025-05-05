@@ -33,10 +33,8 @@ In this article, we will walk through the process of connecting Microsoft Power 
 1. Download the `moving_status_dashboard.pbix` file from this repository:
 
 ```bash
-git clone https://github.com/yourusername/powerbi-dashboard.git
+git clone https://github.com/SquareGPS/bi-intergrations.git
 ```
-
-Or use the **Download ZIP** button on the repository page.
 
 2. Open the downloaded `moving_status_dashboard.pbix` file by double-clicking or through the Power BI Desktop menu: **File → Open**.
 
