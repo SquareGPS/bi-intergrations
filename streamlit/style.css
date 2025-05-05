@@ -1,0 +1,408 @@
+/* Основные стили */
+.stApp {
+    background-color: var(--background-color) !important;
+}
+
+/* Заголовки */
+h1 {
+    color: var(--text-color) !important;
+    font-weight: 700;
+    padding-bottom: 1rem;
+}
+
+h2, h3 {
+    color: var(--text-color) !important;
+    padding-bottom: 0.5rem;
+}
+
+/* Метрики */
+[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    color: var(--text-color) !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 1rem !important;
+    color: var(--secondary-text-color) !important;
+    font-weight: 500 !important;
+}
+
+/* Метрики - контейнер */
+[data-testid="stMetricContainer"] {
+    background-color: var(--background-color) !important;
+    border-radius: 5px !important;
+    padding: 1rem !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24) !important;
+    margin-bottom: 1rem !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Боковая панель */
+[data-testid="stSidebar"] {
+    background-color: var(--background-color) !important;
+    padding: 2rem 1rem;
+}
+
+[data-testid="stSidebar"] .streamlit-expanderHeader {
+    color: var(--text-color) !important;
+    font-weight: 600 !important;
+}
+
+/* Фильтры и селекты */
+[data-baseweb="select"] {
+    background-color: var(--background-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-baseweb="select"] * {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+}
+
+/* Опции в выпадающих списках */
+[role="listbox"] {
+    background-color: var(--background-color) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+}
+
+[role="option"] {
+    color: var(--text-color) !important;
+    background-color: var(--background-color) !important;
+    padding: 8px 12px !important;
+}
+
+[role="option"]:hover {
+    background-color: var(--hover-color) !important;
+}
+
+/* Метки фильтров */
+.stSelectbox label, 
+.stMultiSelect label {
+    color: var(--text-color) !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 4px !important;
+}
+
+/* Графики */
+[data-testid="stPlotlyChart"] > div {
+    background-color: transparent !important;
+}
+
+/* Дополнительные стили для графиков */
+.js-plotly-plot .plotly .gtitle {
+    fill: var(--text-color) !important;
+}
+
+.js-plotly-plot .plotly .g-gtitle {
+    fill: var(--text-color) !important;
+}
+
+/* Улучшение интерфейса фильтров */
+.stMultiSelect [data-baseweb="tag"] {
+    background-color: var(--alternate-bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Улучшение читаемости чекбоксов и переключателей */
+[data-testid="stCheckbox"] label span p {
+    color: var(--text-color) !important;
+}
+
+/* Таблица - базовые стили для адаптивности к теме */
+[data-testid="stDataFrame"] div {
+    color: var(--text-color) !important;
+}
+
+[data-testid="stTable"] div {
+    color: var(--text-color) !important;
+}
+
+/* Прозрачный фон */
+[data-testid="StyledDataFrame"] {
+    background-color: transparent !important;
+}
+
+[data-testid="StyledDataFrameDataCell"] {
+    background-color: transparent !important;
+}
+
+[data-testid="StyledDataFrameHeaderCell"] {
+    background-color: var(--header-bg-color) !important;
+}
+
+.dvn-scroller {
+    background-color: transparent !important;
+}
+
+/* Убираем все конфликтующие стили для таблицы */
+[data-testid="stDataFrame"] * {
+    background-color: transparent !important;
+}
+
+[data-testid="stDataFrameContainer"] {
+    background-color: transparent !important;
+}
+
+/* Дополнительные стили для строк и ячеек (если не сработают другие) */
+table {
+    background-color: transparent !important;
+}
+
+th, td {
+    color: var(--text-color) !important;
+    background-color: transparent !important;
+}
+
+/* Подчистка стилей для цветовой темы */
+.stApp {
+    background-color: var(--background-color);
+}
+
+h1, h2, h3, p, div {
+    color: var(--text-color);
+}
+
+/* Стили для контейнера таблицы */
+[data-testid="stDataFrameContainer"] {
+    background-color: transparent !important;
+}
+
+/* Заголовки таблицы */
+th div {
+    color: var(--text-color) !important;
+    font-weight: 600 !important;
+}
+
+/* Ячейки таблицы */
+td div {
+    color: var(--text-color) !important;
+}
+
+/* Стили для таблицы и строк */
+table.dataframe {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 1rem 0 !important;
+    font-size: 14px !important;
+}
+
+.dataframe tr {
+    color: var(--text-color) !important;
+    background-color: transparent !important;
+}
+
+.dataframe th {
+    color: var(--text-color) !important;
+    background-color: var(--header-bg-color) !important;
+    padding: 8px !important;
+    font-weight: 600 !important;
+}
+
+.dataframe td {
+    color: var(--text-color) !important;
+    background-color: var(--background-color) !important;
+    padding: 8px !important;
+}
+
+/* Чередующиеся строки */
+.dataframe tr:nth-child(even) td {
+    background-color: var(--alternate-bg-color) !important;
+}
+
+/* Переопределяем стили для статусов в таблице */
+tr td div[data-testid="stDataFrameDataCell"] {
+    color: var(--text-color) !important;
+}
+
+/* Стили для статусов */
+.dataframe td:nth-child(6) {
+    font-weight: 600 !important;
+}
+
+.dataframe td:nth-child(7) {
+    font-weight: 600 !important;
+}
+
+/* Стили для кнопок */
+div[data-testid="stButton"] button {
+    color: var(--button-text-color) !important;
+    background-color: var(--alternate-bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+div[data-testid="stButton"] button:hover {
+    background-color: var(--hover-color) !important;
+    border-color: var(--secondary-text-color) !important;
+}
+
+/* Стили для кнопки загрузки */
+div[data-testid="stDownloadButton"] button {
+    color: var(--button-text-color) !important;
+    background-color: var(--alternate-bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+div[data-testid="stDownloadButton"] button:hover {
+    background-color: var(--hover-color) !important;
+    border-color: var(--secondary-text-color) !important;
+}
+
+/* Специальные классы для статусов */
+.moving, .active {
+    color: #27ae60 !important;
+    font-weight: 600 !important;
+}
+
+.stopped, .idle {
+    color: #d35400 !important;
+    font-weight: 600 !important;
+}
+
+.parked, .offline {
+    color: #7f8c8d !important;
+    font-weight: 600 !important;
+}
+
+/* Стили для строк в таблице */
+div[data-testid="StyledDataFrameRowHeader"] {
+    color: var(--text-color) !important;
+    background-color: transparent !important;
+}
+
+/* Стили для статусов с сохранением цветов */
+.status-moving, .status-active {
+    color: #27ae60 !important;
+    font-weight: 600 !important;
+}
+
+.status-stopped, .status-idle {
+    color: #d35400 !important;
+    font-weight: 600 !important;
+}
+
+.status-parked, .status-offline {
+    color: #7f8c8d !important;
+    font-weight: 600 !important;
+}
+
+/* Специальные селекторы для дочерних элементов таблицы */
+[data-testid="stDataFrame"] * {
+    color: var(--text-color) !important;
+    background-color: var(--background-color) !important;
+}
+
+/* Исключения для строк с разным фоном */
+[data-testid="stDataFrame"] tr:nth-child(even) * {
+    background-color: var(--alternate-bg-color) !important;
+}
+
+/* Исключения для заголовков */
+[data-testid="stDataFrame"] thead tr * {
+    background-color: var(--header-bg-color) !important;
+}
+
+/* Стили для таблицы и st.table */
+[data-testid="stTable"] {
+    width: 100%;
+}
+
+[data-testid="stTable"] table {
+    width: 100%;
+    color: var(--text-color) !important;
+    background-color: var(--background-color) !important;
+    border-collapse: collapse;
+}
+
+[data-testid="stTable"] th {
+    color: var(--text-color) !important;
+    background-color: var(--header-bg-color) !important;
+    font-weight: 600 !important;
+    text-align: left;
+    padding: 0.5rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-testid="stTable"] td {
+    color: var(--text-color) !important;
+    background-color: var(--background-color) !important;
+    padding: 0.5rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-testid="stTable"] tr:nth-child(even) td {
+    background-color: var(--alternate-bg-color) !important;
+}
+
+/* Стили для заголовков таблицы */
+table.dataframe thead th {
+    text-align: left !important;
+    padding: 12px 8px !important;
+    background-color: var(--header-bg-color) !important;
+    color: var(--text-color) !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    white-space: nowrap !important;
+}
+
+/* Стили для ячеек таблицы */
+table.dataframe tbody td {
+    text-align: left !important;
+    padding: 12px 8px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    white-space: nowrap !important;
+}
+
+/* Определяем ширину для каждого столбца */
+table.dataframe th:nth-child(1), 
+table.dataframe td:nth-child(1) { /* Vehicle */
+    width: 15% !important;
+}
+
+table.dataframe th:nth-child(2),
+table.dataframe td:nth-child(2), /* First Name */
+table.dataframe th:nth-child(3),
+table.dataframe td:nth-child(3) { /* Last Name */
+    width: 12% !important;
+}
+
+table.dataframe th:nth-child(4),
+table.dataframe td:nth-child(4) { /* Time */
+    width: 15% !important;
+}
+
+table.dataframe th:nth-child(5),
+table.dataframe td:nth-child(5) { /* Speed */
+    width: 10% !important;
+}
+
+table.dataframe th:nth-child(6),
+table.dataframe td:nth-child(6), /* Movement Status */
+table.dataframe th:nth-child(7),
+table.dataframe td:nth-child(7) { /* Connection Status */
+    width: 12% !important;
+}
+
+table.dataframe th:nth-child(8),
+table.dataframe td:nth-child(8) { /* Last Connection */
+    width: 12% !important;
+}
+
+/* Стили для четных строк */
+table.dataframe tbody tr:nth-child(even) {
+    background-color: var(--alternate-bg-color) !important;
+}
+
+/* Стили для наведения на строку */
+table.dataframe tbody tr:hover {
+    background-color: var(--hover-color) !important;
+}
+
+/* Стили для статусов в таблице */
+table.dataframe td:nth-child(6), /* Movement Status */
+table.dataframe td:nth-child(7) { /* Connection Status */
+    font-weight: 600 !important;
+} 
