@@ -2,7 +2,7 @@
 
 In this article, we will walk through the process of building a dashboard using Streamlit. To make it more illustrative, we will create a dashboard that connects to the analytical database and monitors the real-time status of vehicles.
 
-> This guide is part of the Private Telematics Lakehouse documentation suite and specifically covers connecting Power BI to your data warehouse. If you're still deciding which BI tool to use, refer to the [Selecting BI tools](https://squaregps.atlassian.net/wiki/spaces/DTP/pages/3247505491/Selecting+BI+tools) overview.
+> This guide is part of the Private Telematics Lakehouse documentation suite and specifically covers connecting Streamlit to your data warehouse. If you're still deciding which BI tool to use, refer to the [Selecting BI tools](https://docs.navixy.com/user-guide/connecting-apache-superset) overview.
 
 ## Dashboard features
 
