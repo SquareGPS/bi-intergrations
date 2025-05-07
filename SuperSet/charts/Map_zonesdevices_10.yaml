@@ -1,0 +1,33 @@
+slice_name: Map_zones&devices
+description: null
+certified_by: null
+certification_details: null
+viz_type: deck_multi
+params:
+  datasource: 4__table
+  viz_type: deck_multi
+  mapbox_style: mapbox://styles/mapbox/light-v9
+  viewport:
+    longitude: 6.85236157047845
+    latitude: 31.222656842808707
+    zoom: 1
+    bearing: 0
+    pitch: 0
+  deck_slices:
+  - 5
+  - 9
+  adhoc_filters:
+  - clause: WHERE
+    subject: device_time
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    expressionType: SIMPLE
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource":{"id":4,"type":"table"},"force":false,"queries":[{"filters":[{"col":"device_time","op":"TEMPORAL_RANGE","val":"No
+  filter"}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":[],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"4__table","viz_type":"deck_multi","mapbox_style":"mapbox://styles/mapbox/light-v9","viewport":{"longitude":6.85236157047845,"latitude":31.222656842808707,"zoom":1,"bearing":0,"pitch":0},"deck_slices":[5,9],"adhoc_filters":[{"clause":"WHERE","subject":"device_time","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","expressionType":"SIMPLE"}],"extra_form_data":{},"dashboards":[],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: a97756d0-1099-4c8d-aaa0-520b1dd42ef0
+version: 1.0.0
+dataset_uuid: 1fd2407a-3416-4b34-8306-d95de18edbbb

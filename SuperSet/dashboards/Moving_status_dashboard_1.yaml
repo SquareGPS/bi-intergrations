@@ -1,0 +1,368 @@
+dashboard_title: Moving status dashboard
+description: null
+css: "/* \u0426\u0435\u043D\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435\
+  \  */\r\nh1 {\r\n    text-align: center;\r\n}\r\n\r\n[data-test-viz-type=\"big_number_total\"\
+  ] .header-title {\r\n    width: 100%;\r\n    text-align: center;\r\n    display:\
+  \ block;\r\n}\r\n\r\n\r\n.dashboard-component-chart-holder .superset-legacy-chart-big-number\
+  \ {\r\n    display: flex;\r\n    justify-content: center;\r\n    align-items: center;\r\
+  \n    flex-direction: column;\r\n    height: auto;\r\n    padding: 10px 0;\r\n}\r\
+  \n\r\n\r\n"
+slug: null
+certified_by: ''
+certification_details: ''
+published: false
+uuid: 106d18b4-3d39-4897-8d72-3b0a70e5eb6f
+position:
+  CHART-1W8vurLcAevzqBBUryRrf:
+    children: []
+    id: CHART-1W8vurLcAevzqBBUryRrf
+    meta:
+      chartId: 17
+      height: 20
+      sliceName: Stopped
+      uuid: eb72ae2f-32d8-469a-b330-4cb1de532e78
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    type: CHART
+  CHART-2odI1T0EqH3F6TY89wQdN:
+    children: []
+    id: CHART-2odI1T0EqH3F6TY89wQdN
+    meta:
+      chartId: 11
+      height: 19
+      sliceName: Total devices
+      uuid: 696f3319-ce81-48ee-b90d-3828c29d1469
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-ohkWbUxLk0_Lp_HqUwJRp
+    type: CHART
+  CHART-38emAH0tOHQJIR51dNO9T:
+    children: []
+    id: CHART-38emAH0tOHQJIR51dNO9T
+    meta:
+      chartId: 13
+      height: 20
+      sliceName: Stale
+      uuid: 701e8bad-e675-4cf1-93ac-eb304a3e17b4
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    type: CHART
+  CHART-7rVfL4T_kl8BAPbJ9utU6:
+    children: []
+    id: CHART-7rVfL4T_kl8BAPbJ9utU6
+    meta:
+      chartId: 12
+      height: 20
+      sliceName: Offline
+      uuid: a1af3223-9c2b-4f26-b54b-daf1cd8a2b94
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    type: CHART
+  CHART-K1omrNibmZubdLfnOINsK:
+    children: []
+    id: CHART-K1omrNibmZubdLfnOINsK
+    meta:
+      chartId: 10
+      height: 50
+      sliceName: Map_zones&devices
+      uuid: a97756d0-1099-4c8d-aaa0-520b1dd42ef0
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-YBKI6_XdfnW-i-E6681Dv
+    type: CHART
+  CHART-ctghIfAKk9aT5q9ZXCmTl:
+    children: []
+    id: CHART-ctghIfAKk9aT5q9ZXCmTl
+    meta:
+      chartId: 16
+      height: 20
+      sliceName: Moving
+      uuid: aacdb715-b505-4773-82f4-9ee719253286
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    type: CHART
+  CHART-dqIm4TAS9F4mURMeTjkab:
+    children: []
+    id: CHART-dqIm4TAS9F4mURMeTjkab
+    meta:
+      chartId: 7
+      height: 50
+      sliceName: Movement status
+      uuid: fb2ad055-a132-43aa-bcb7-99efd1bb772b
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-3XmKyRO5GxgA2cji4h-Wv
+    type: CHART
+  CHART-ioBCdmxmfoS_8LZ3XCbJK:
+    children: []
+    id: CHART-ioBCdmxmfoS_8LZ3XCbJK
+    meta:
+      chartId: 6
+      height: 50
+      sliceName: Tracker status
+      uuid: d6fcf5b3-0ad3-4359-8c7d-b34f0facf02d
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-3XmKyRO5GxgA2cji4h-Wv
+    type: CHART
+  CHART-iormSWnXx1_ebg89J5eZh:
+    children: []
+    id: CHART-iormSWnXx1_ebg89J5eZh
+    meta:
+      chartId: 8
+      height: 50
+      sliceName: Sheet
+      uuid: 9b5b4af4-dab6-46fb-aea6-a05773195722
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-YBKI6_XdfnW-i-E6681Dv
+    type: CHART
+  CHART-tVxdvnWNZmbexo-I2CVTM:
+    children: []
+    id: CHART-tVxdvnWNZmbexo-I2CVTM
+    meta:
+      chartId: 15
+      height: 20
+      sliceName: Parked
+      uuid: dc9da757-a862-417e-bcf4-74aaf40a53c3
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    type: CHART
+  CHART-uK5FGKApNb1CKsGsyTjnQ:
+    children: []
+    id: CHART-uK5FGKApNb1CKsGsyTjnQ
+    meta:
+      chartId: 14
+      height: 20
+      sliceName: Active
+      uuid: e2c5d970-8846-4a01-ac28-ecf8ba2fcc78
+      width: 2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    type: CHART
+  COLUMN-Dxu9vZHnvDrC5cUNjNBE1:
+    children:
+    - MARKDOWN-dquD6zaXxBfzuJv9ygvfT
+    id: COLUMN-Dxu9vZHnvDrC5cUNjNBE1
+    meta:
+      background: BACKGROUND_TRANSPARENT
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-zTugRGcYqp_aXrmwSByv8
+    type: COLUMN
+  DASHBOARD_VERSION_KEY: v2
+  GRID_ID:
+    children:
+    - ROW-ohkWbUxLk0_Lp_HqUwJRp
+    - ROW-zTugRGcYqp_aXrmwSByv8
+    - ROW-WWIDk29QweAlFaz5Au4Wf
+    - ROW-3XmKyRO5GxgA2cji4h-Wv
+    - ROW-YBKI6_XdfnW-i-E6681Dv
+    id: GRID_ID
+    parents:
+    - ROOT_ID
+    type: GRID
+  HEADER_ID:
+    id: HEADER_ID
+    meta:
+      text: Moving status dashboard
+    type: HEADER
+  MARKDOWN-dquD6zaXxBfzuJv9ygvfT:
+    children: []
+    id: MARKDOWN-dquD6zaXxBfzuJv9ygvfT
+    meta:
+      code: '# Movement status'
+      height: 12
+      width: 4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-zTugRGcYqp_aXrmwSByv8
+    - COLUMN-Dxu9vZHnvDrC5cUNjNBE1
+    type: MARKDOWN
+  MARKDOWN-ejGPJuP1Haa-r-OpDFIv2:
+    children: []
+    id: MARKDOWN-ejGPJuP1Haa-r-OpDFIv2
+    meta:
+      code: '# Tracker status'
+      height: 12
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-zTugRGcYqp_aXrmwSByv8
+    type: MARKDOWN
+  ROOT_ID:
+    children:
+    - GRID_ID
+    id: ROOT_ID
+    type: ROOT
+  ROW-3XmKyRO5GxgA2cji4h-Wv:
+    children:
+    - CHART-dqIm4TAS9F4mURMeTjkab
+    - CHART-ioBCdmxmfoS_8LZ3XCbJK
+    id: ROW-3XmKyRO5GxgA2cji4h-Wv
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-WWIDk29QweAlFaz5Au4Wf:
+    children:
+    - CHART-ctghIfAKk9aT5q9ZXCmTl
+    - CHART-1W8vurLcAevzqBBUryRrf
+    - CHART-tVxdvnWNZmbexo-I2CVTM
+    - CHART-uK5FGKApNb1CKsGsyTjnQ
+    - CHART-38emAH0tOHQJIR51dNO9T
+    - CHART-7rVfL4T_kl8BAPbJ9utU6
+    id: ROW-WWIDk29QweAlFaz5Au4Wf
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-YBKI6_XdfnW-i-E6681Dv:
+    children:
+    - CHART-iormSWnXx1_ebg89J5eZh
+    - CHART-K1omrNibmZubdLfnOINsK
+    id: ROW-YBKI6_XdfnW-i-E6681Dv
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-ohkWbUxLk0_Lp_HqUwJRp:
+    children:
+    - CHART-2odI1T0EqH3F6TY89wQdN
+    id: ROW-ohkWbUxLk0_Lp_HqUwJRp
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-zTugRGcYqp_aXrmwSByv8:
+    children:
+    - COLUMN-Dxu9vZHnvDrC5cUNjNBE1
+    - MARKDOWN-ejGPJuP1Haa-r-OpDFIv2
+    id: ROW-zTugRGcYqp_aXrmwSByv8
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+metadata:
+  chart_configuration:
+    '6':
+      id: 6
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 7
+        - 8
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+    '7':
+      id: 7
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 8
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+    '8':
+      id: 8
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+  global_chart_configuration:
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded: []
+    chartsInScope:
+    - 6
+    - 7
+    - 8
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+  map_label_colors:
+    offline: '#1FA8C9'
+    active: '#5AC189'
+    idle: '#454E7C'
+    parked: '#1FA8C9'
+    moving: '#454E7C'
+    stopped: '#5AC189'
+  color_scheme: ''
+  refresh_frequency: 0
+  color_scheme_domain: []
+  expanded_slices: {}
+  label_colors: {}
+  shared_label_colors: []
+  timed_refresh_immune_slices: []
+  cross_filters_enabled: true
+  default_filters: '{}'
+  stagger_refresh: true
+version: 1.0.0

@@ -1,0 +1,16 @@
+database_name: squaregps_app_access
+sqlalchemy_uri: postgresql+psycopg2://squaregps_app_access:XXXXXXXXXX@ep-muddy-night-a24oif0j-pooler.eu-central-1.aws.neon.tech/client_326820?sslmode=require
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: false
+extra:
+  metadata_params: {}
+  engine_params: {}
+  metadata_cache_timeout: {}
+  schemas_allowed_for_file_upload: []
+uuid: 4b1babc6-f21d-4fd4-8e8c-2ebf31fd533a
+version: 1.0.0

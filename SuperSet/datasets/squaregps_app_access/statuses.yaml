@@ -1,0 +1,256 @@
+table_name: statuses
+main_dttm_col: device_time
+description: null
+default_endpoint: null
+offset: 0
+cache_timeout: null
+catalog: client_326820
+schema: null
+sql: "WITH filtered_tracking_data AS (\r\n  SELECT *\r\n  FROM raw_telematics_data.tracking_data_core\r\
+  \n  WHERE device_time > now() - INTERVAL '1 days'\r\n),\r\nlatest_tracking AS (\r\
+  \n  SELECT DISTINCT ON (device_id)\r\n    device_id,\r\n    device_time,\r\n   \
+  \ event_id,\r\n    speed,\r\n    longitude,\r\n    latitude,\r\n    altitude\r\n\
+  \  FROM filtered_tracking_data\r\n  WHERE event_id IN (2, 802, 803, 804, 811)\r\n\
+  \  ORDER BY device_id, device_time DESC\r\n),\r\nlatest_positions AS (\r\n  SELECT\
+  \ DISTINCT ON (device_id)\r\n    device_id,\r\n    longitude,\r\n    latitude\r\n\
+  \  FROM filtered_tracking_data\r\n  ORDER BY device_id, device_time DESC\r\n),\r\
+  \nzones_match AS (\r\n  SELECT\r\n    z.zone_label,\r\n    lp.device_id\r\n  FROM\
+  \ raw_business_data.zones z\r\n  JOIN latest_positions lp ON ST_DWithin(\r\n   \
+  \ ST_SetSRID(ST_MakePoint(lp.longitude / 1e7, lp.latitude / 1e7), 4326)::geography,\r\
+  \n    ST_SetSRID(ST_MakePoint(z.circle_center_longitude, z.circle_center_latitude),\
+  \ 4326)::geography,\r\n    z.radius\r\n  )\r\n  WHERE z.zone_type = 'circle'\r\n\
+  )\r\n\r\n-- \u043E\u0441\u043D\u043E\u0432\u043D\u043E\u0439 \u0437\u0430\u043F\u0440\
+  \u043E\u0441:\r\nSELECT\r\n  o.object_id,\r\n  o.device_id,\r\n  o.object_label,\r\
+  \n  e.first_name,\r\n  e.last_name,\r\n  t.device_time,\r\n  t.event_id,\r\n  t.speed\
+  \ / 1e2 AS speed,\r\n  string_agg(DISTINCT zones_match.zone_label, ', ') AS geozones,\r\
+  \n  t.longitude / 1e7 AS longitude,\r\n  t.latitude / 1e7 AS latitude,\r\n  t.altitude\
+  \ / 1e7 AS altitude,\r\n  EXTRACT(EPOCH FROM (now() - t.device_time)) AS last_connect,\r\
+  \n  TO_CHAR(\r\n      make_interval(secs => EXTRACT(EPOCH FROM (now() - t.device_time))),\r\
+  \n    'HH24:MI:SS'\r\n  ) AS last_connect_formatted,\r\n  CASE\r\n      WHEN t.device_time\
+  \ IS NULL THEN 'offline'\r\n      WHEN EXTRACT(EPOCH FROM (now() - t.device_time))\
+  \ <= 60 THEN 'active'\r\n      WHEN EXTRACT(EPOCH FROM (now() - t.device_time))\
+  \ <= 300 THEN 'idle'\r\n      ELSE 'offline'\r\n  END AS Connection_status,\r\n\
+  \  CASE\r\n      WHEN t.device_time IS NULL THEN 'parked'\r\n      WHEN t.speed\
+  \ > 3 AND EXTRACT(EPOCH FROM (now() - t.device_time)) <= 300 THEN 'moving'\r\n \
+  \     WHEN t.speed <= 3 AND EXTRACT(EPOCH FROM (now() - t.device_time)) <= 300 THEN\
+  \ 'stopped'\r\n      ELSE 'parked'\r\n  END AS moving_status\r\nFROM raw_business_data.objects\
+  \ AS o\r\nLEFT JOIN latest_tracking AS t ON o.device_id = t.device_id\r\nLEFT JOIN\
+  \ raw_business_data.employees AS e ON o.object_id = e.object_id\r\nLEFT JOIN zones_match\
+  \ ON zones_match.device_id = t.device_id\r\nGROUP BY\r\n  o.object_id,\r\n  o.device_id,\r\
+  \n  o.object_label,\r\n  e.first_name,\r\n  e.last_name,\r\n  t.device_time,\r\n\
+  \  t.event_id,\r\n  t.speed,\r\n  t.longitude,\r\n  t.latitude,\r\n  t.altitude\r\
+  \nORDER BY\r\n  t.device_time DESC NULLS LAST;\r\n"
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 1fd2407a-3416-4b34-8306-d95de18edbbb
+metrics:
+- metric_name: count
+  verbose_name: COUNT(*)
+  metric_type: count
+  expression: COUNT(*)
+  description: null
+  d3format: null
+  currency: null
+  extra:
+    warning_markdown: ''
+  warning_text: null
+columns:
+- column_name: last_connect
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: latitude
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: altitude
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: speed
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: longitude
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: device_time
+  verbose_name: null
+  is_dttm: true
+  is_active: true
+  type: DATETIMETZ
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: object_id
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: INTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: device_id
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: INTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: event_id
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: INTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: last_connect_formatted
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: last_name
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: object_label
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: connection_status
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: first_name
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: moving_status
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+- column_name: geozones
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: {}
+version: 1.0.0
+database_uuid: 4b1babc6-f21d-4fd4-8e8c-2ebf31fd533a

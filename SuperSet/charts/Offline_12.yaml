@@ -1,0 +1,46 @@
+slice_name: Offline
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 4__table
+  viz_type: big_number_total
+  slice_id: 12
+  metric: count
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_dowfq9b3359_5ojpsy6kz5g
+    isExtra: false
+    isNew: false
+    operator: TEMPORAL_RANGE
+    sqlExpression: null
+    subject: device_time
+  - clause: WHERE
+    comparator:
+    - offline
+    datasourceWarning: false
+    expressionType: SIMPLE
+    filterOptionName: filter_msk3fnv1ykk_ulc9jpmsqtr
+    isExtra: false
+    isNew: false
+    operator: IN
+    operatorId: IN
+    sqlExpression: null
+    subject: connection_status
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource":{"id":4,"type":"table"},"force":false,"queries":[{"filters":[{"col":"device_time","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"connection_status","op":"IN","val":["offline"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"4__table","viz_type":"big_number_total","slice_id":12,"metric":"count","adhoc_filters":[{"clause":"WHERE","comparator":"No
+  filter","datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_dowfq9b3359_5ojpsy6kz5g","isExtra":false,"isNew":false,"operator":"TEMPORAL_RANGE","sqlExpression":null,"subject":"device_time"},{"clause":"WHERE","comparator":["offline"],"datasourceWarning":false,"expressionType":"SIMPLE","filterOptionName":"filter_msk3fnv1ykk_ulc9jpmsqtr","isExtra":false,"isNew":false,"operator":"IN","operatorId":"IN","sqlExpression":null,"subject":"connection_status"}],"header_font_size":0.4,"subheader_font_size":0.15,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","extra_form_data":{},"dashboards":[],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: a1af3223-9c2b-4f26-b54b-daf1cd8a2b94
+version: 1.0.0
+dataset_uuid: 1fd2407a-3416-4b34-8306-d95de18edbbb

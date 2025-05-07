@@ -1,0 +1,45 @@
+slice_name: Active
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 4__table
+  viz_type: big_number_total
+  metric: count
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: device_time
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_6knv28p8dkj_jz7c5shric
+  - expressionType: SIMPLE
+    subject: connection_status
+    operator: IN
+    operatorId: IN
+    comparator:
+    - active
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_0ytii6vh3fsl_oxobl9qvcu
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource":{"id":4,"type":"table"},"force":false,"queries":[{"filters":[{"col":"device_time","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"connection_status","op":"IN","val":["active"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":[],"metrics":["count"],"annotation_layers":[],"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"4__table","viz_type":"big_number_total","metric":"count","adhoc_filters":[{"expressionType":"SIMPLE","subject":"device_time","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_6knv28p8dkj_jz7c5shric"},{"expressionType":"SIMPLE","subject":"connection_status","operator":"IN","operatorId":"IN","comparator":["active"],"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_0ytii6vh3fsl_oxobl9qvcu"}],"header_font_size":0.4,"subheader_font_size":0.15,"y_axis_format":"SMART_NUMBER","time_format":"smart_date","extra_form_data":{},"dashboards":[],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: e2c5d970-8846-4a01-ac28-ecf8ba2fcc78
+version: 1.0.0
+dataset_uuid: 1fd2407a-3416-4b34-8306-d95de18edbbb
