@@ -66,7 +66,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT COUNT(*)::bigint AS value FROM business_data.zone_visits WHERE enter_time >= now() - interval '1 day'"
+          "statement": "SELECT COUNT(*)::bigint AS value FROM processed_common_data.zone_visits WHERE enter_time >= now() - interval '1 day'"
         },
         "verify": {
           "max_rows": 1
@@ -128,7 +128,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH time_classified_tracks AS (SELECT t.track_distance_meters, CASE WHEN EXTRACT(DOW FROM t.track_start_time) IN (0, 6) THEN 'weekend' WHEN EXTRACT(HOUR FROM t.track_start_time) BETWEEN 9 AND 18 THEN 'authorized' ELSE 'unauthorized' END AS time_category FROM business_data.tracks t WHERE t.track_start_time >= now() - interval '1 day') SELECT COALESCE(ROUND(SUM(track_distance_meters)/1000.0, 0), 0)::bigint AS value FROM time_classified_tracks WHERE time_category = 'unauthorized'"
+          "statement": "WITH time_classified_trips AS (SELECT t.trip_distance_meters, CASE WHEN EXTRACT(DOW FROM t.trip_start_time) IN (0, 6) THEN 'weekend' WHEN EXTRACT(HOUR FROM t.trip_start_time) BETWEEN 9 AND 18 THEN 'authorized' ELSE 'unauthorized' END AS time_category FROM processed_common_data.trips t WHERE t.trip_start_time >= now() - interval '1 day') SELECT COALESCE(ROUND(SUM(trip_distance_meters)/1000.0, 0), 0)::bigint AS value FROM time_classified_trips WHERE time_category = 'unauthorized'"
         },
         "verify": {
           "max_rows": 1
@@ -159,7 +159,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH time_classified_tracks AS (SELECT t.device_id, CASE WHEN EXTRACT(DOW FROM t.track_start_time) IN (0, 6) THEN 'weekend_usage' WHEN EXTRACT(HOUR FROM t.track_start_time) BETWEEN 9 AND 18 THEN 'authorized_work_time' ELSE 'unauthorized_non_work_time' END AS time_category, t.track_distance_meters FROM business_data.tracks t WHERE t.track_start_time >= now() - interval '30 days') SELECT time_category AS category, ROUND(SUM(track_distance_meters)/1000.0, 0) AS value FROM time_classified_tracks GROUP BY time_category ORDER BY time_category"
+          "statement": "WITH time_classified_trips AS (SELECT t.device_id, CASE WHEN EXTRACT(DOW FROM t.trip_start_time) IN (0, 6) THEN 'weekend_usage' WHEN EXTRACT(HOUR FROM t.trip_start_time) BETWEEN 9 AND 18 THEN 'authorized_work_time' ELSE 'unauthorized_non_work_time' END AS time_category, t.trip_distance_meters FROM processed_common_data.trips t WHERE t.trip_start_time >= now() - interval '30 days') SELECT time_category AS category, ROUND(SUM(trip_distance_meters)/1000.0, 0) AS value FROM time_classified_trips GROUP BY time_category ORDER BY time_category"
         },
         "verify": {
           "max_rows": 10
@@ -220,7 +220,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT COALESCE(zg.zone_label, 'Unknown') AS category, COUNT(*)::bigint AS value FROM business_data.zone_visits zv LEFT JOIN business_data.zones_geom zg ON zg.zone_id = zv.zone_id WHERE zv.enter_time >= now() - interval '7 days' GROUP BY zg.zone_label ORDER BY value DESC LIMIT 15"
+          "statement": "SELECT COALESCE(zg.zone_label, 'Unknown') AS category, COUNT(*)::bigint AS value FROM processed_common_data.zone_visits zv LEFT JOIN processed_common_data.zones_geom zg ON zg.zone_id = zv.zone_id WHERE zv.enter_time >= now() - interval '7 days' GROUP BY zg.zone_label ORDER BY value DESC LIMIT 15"
         },
         "verify": {
           "max_rows": 15
@@ -254,7 +254,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT o.object_label AS category,  COUNT(*)::bigint AS value, 'trips' AS series  \r\nFROM business_data.tracks t JOIN raw_business_data.objects o ON o.device_id = t.device_id AND o.is_deleted IS NOT TRUE \r\nWHERE t.track_start_time >= now() - interval '1 day' \r\nGROUP BY o.object_label ORDER BY value DESC LIMIT 50"
+          "statement": "SELECT o.object_label AS category,  COUNT(*)::bigint AS value, 'trips' AS series  \r\nFROM processed_common_data.trips t JOIN raw_business_data.objects o ON o.device_id = t.device_id AND o.is_deleted IS NOT TRUE \r\nWHERE t.trip_start_time >= now() - interval '1 day' \r\nGROUP BY o.object_label ORDER BY value DESC LIMIT 50"
         },
         "verify": {
           "max_rows": 50
@@ -281,7 +281,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT o.object_label AS category, ROUND(SUM(t.track_distance_meters)/1000.0, 1)::numeric AS value,  'km' AS series \r\nFROM business_data.tracks t JOIN raw_business_data.objects o ON o.device_id = t.device_id AND o.is_deleted IS NOT TRUE \r\nWHERE t.track_start_time >= now() - interval '1 day' \r\nGROUP BY o.object_label ORDER BY value DESC NULLS LAST LIMIT 50"
+          "statement": "SELECT o.object_label AS category, ROUND(SUM(t.trip_distance_meters)/1000.0, 1)::numeric AS value,  'km' AS series \r\nFROM processed_common_data.trips t JOIN raw_business_data.objects o ON o.device_id = t.device_id AND o.is_deleted IS NOT TRUE \r\nWHERE t.trip_start_time >= now() - interval '1 day' \r\nGROUP BY o.object_label ORDER BY value DESC NULLS LAST LIMIT 50"
         },
         "verify": {
           "max_rows": 50
@@ -308,7 +308,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT o.object_label, zg.zone_label, zv.enter_time, zv.exit_time, trim(leading '0' from to_char(interval '0' + zv.duration, 'HH24:MI:SS')) AS duration \r\nFROM business_data.zone_visits zv \r\nJOIN raw_business_data.objects o ON o.device_id = zv.device_id AND o.is_deleted IS NOT TRUE LEFT JOIN business_data.zones_geom zg ON zg.zone_id = zv.zone_id \r\nWHERE zv.enter_time >= now() - interval '7 days'  \r\nORDER BY zv.enter_time DESC LIMIT 20"
+          "statement": "SELECT o.object_label, zg.zone_label, zv.enter_time, zv.exit_time, trim(leading '0' from to_char(interval '0' + zv.duration, 'HH24:MI:SS')) AS duration \r\nFROM processed_common_data.zone_visits zv \r\nJOIN raw_business_data.objects o ON o.device_id = zv.device_id AND o.is_deleted IS NOT TRUE LEFT JOIN processed_common_data.zones_geom zg ON zg.zone_id = zv.zone_id \r\nWHERE zv.enter_time >= now() - interval '7 days'  \r\nORDER BY zv.enter_time DESC LIMIT 20"
         },
         "verify": {
           "max_rows": 20

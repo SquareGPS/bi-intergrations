@@ -117,3 +117,19 @@ Mileage recorded outside working hours (`EXTRACT(HOUR FROM device_time)` outside
 
 ### Workload Bands
 Daily engine hour ranges: light (<4 h), medium (4–8 h), heavy (>8 h). Aggregated by `device_id` and `DATE(device_time)`.
+
+---
+
+## Слой данных (после рефакторинга клиентской БД)
+
+| Изменение | Суть |
+|-----------|------|
+| Схема обработки | **`processed_common_data`** вместо `business_data` |
+| Поездки | Таблица **`trips`**, поля **`trip_*`** (`trip_start_time`, `trip_distance_meters`, …) |
+| Справочники / сырые объекты | **`raw_business_data`**, телематика — **`raw_telematics_data`** |
+| События | Для подписей к кодам: **`processed_common_data.event_description`** |
+| Настройки устройств | **`processed_common_data.device_settings`** (ключ–значение при полной синхронизации) |
+| Датчики по часам | **`processed_common_data.sensors_data_by_hours`**, колонка **`value_title`** — подпись значения с клиента |
+
+Инфраструктура SQL: `19_trips.sql` / `20_generate_trips.sql` вместо `18_tracks.sql` / `20_generate_tracks.sql`; переименован `02_update_description_parameters.sql`.
+

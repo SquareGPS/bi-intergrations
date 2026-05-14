@@ -86,7 +86,7 @@ It helps to:
 
 | Panel | Type | Description |
 |-------|------|-------------|
-| Supply Voltage by Unit (last 1 hour) | Table | Supply voltage per device over the last hour |
+| Supply Voltage by Unit (last 1 hour) | Table | Supply voltage per device over the last hour; includes `sensor_title` from `value_title` when set |
 | Speeding Violations (last 30 days) | Table | Violation log: vehicle, speed, time, location |
 | Units Inactive More Than 1 Days | Table | Vehicles inactive 1+ day: label, last signal |
 | Average Mileage by Unit (last 30 days) | Table | Average daily mileage per vehicle over 30 days |
@@ -110,13 +110,29 @@ The maximum `device_time` from `tracking_data_core` is retrieved for each `devic
 - > 5 days → Inactive
 
 ### Supply Voltage
-Data from `raw_telematics_data.inputs` with `sensor_name = 'voltage'` or equivalent. Last value within 1 hour per device.
+Hourly aggregates from `processed_common_data.sensors_data_by_hours`, joined to `raw_business_data.sensor_description` for power-type sensors (`sensor_type = 'power'`, `units_type = 24`) in the last hour. The column **`sensor_title`** prefers `value_title` from the aggregate (client-defined label for the reading) and falls back to `sensor_name`.
 
 ### Speeding Violations
 Records from `tracking_data_core` where `speed / 100.0` exceeds the set threshold. Enriched with object label via JOIN with `objects`.
 
 ### Mileage by Geozone
-Mileage is calculated from GPS points that fall inside a geozone (via `ST_DWithin`), summed using Haversine over the period.
+Trip start points are matched to geozones using `processed_common_data.zones_geom` and `ST_DWithin` on trip coordinates; mileage comes from `trip_distance_meters` in `processed_common_data.trips` for the reporting window.
 
 ### Map
 Last `(latitude, longitude)` record per `device_id`, converted from scaled format (`÷ 1e7`).
+
+---
+
+## Слой данных (после рефакторинга клиентской БД)
+
+| Изменение | Суть |
+|-----------|------|
+| Схема обработки | **`processed_common_data`** вместо `business_data` |
+| Поездки | Таблица **`trips`**, поля **`trip_*`** (`trip_start_time`, `trip_distance_meters`, …) |
+| Справочники / сырые объекты | **`raw_business_data`**, телематика — **`raw_telematics_data`** |
+| События | Для подписей к кодам: **`processed_common_data.event_description`** |
+| Настройки устройств | **`processed_common_data.device_settings`** (ключ–значение при полной синхронизации) |
+| Датчики по часам | **`processed_common_data.sensors_data_by_hours`**, колонка **`value_title`** — подпись значения с клиента |
+
+Инфраструктура SQL: `19_trips.sql` / `20_generate_trips.sql` вместо `18_tracks.sql` / `20_generate_tracks.sql`; переименован `02_update_description_parameters.sql`.
+

@@ -108,3 +108,19 @@ From the last `tracking_data_core` record per `device_id`:
 
 ### Metadata Enrichment
 JOIN with `raw_business_data.objects`, `devices` (for IMEI), `groups` (for group label), and `vehicles` (for model and registration number).
+
+---
+
+## Слой данных (после рефакторинга клиентской БД)
+
+| Изменение | Суть |
+|-----------|------|
+| Схема обработки | **`processed_common_data`** вместо `business_data` |
+| Поездки | Таблица **`trips`**, поля **`trip_*`** (`trip_start_time`, `trip_distance_meters`, …) |
+| Справочники / сырые объекты | **`raw_business_data`**, телематика — **`raw_telematics_data`** |
+| События | Для подписей к кодам: **`processed_common_data.event_description`** |
+| Настройки устройств | **`processed_common_data.device_settings`** (ключ–значение при полной синхронизации) |
+| Датчики по часам | **`processed_common_data.sensors_data_by_hours`**, колонка **`value_title`** — подпись значения с клиента |
+
+Инфраструктура SQL: `19_trips.sql` / `20_generate_trips.sql` вместо `18_tracks.sql` / `20_generate_tracks.sql`; переименован `02_update_description_parameters.sql`.
+

@@ -130,3 +130,19 @@ Share of trips where both the start and end point are inside a geozone (`ST_DWit
 
 ### Speed Bands
 Each trip is classified by `MAX(speed / 100.0)` over the movement period. Results are grouped by thresholds for the Speed Compliance Mix.
+
+---
+
+## Слой данных (после рефакторинга клиентской БД)
+
+| Изменение | Суть |
+|-----------|------|
+| Схема обработки | **`processed_common_data`** вместо `business_data` |
+| Поездки | Таблица **`trips`**, поля **`trip_*`** (`trip_start_time`, `trip_distance_meters`, …) |
+| Справочники / сырые объекты | **`raw_business_data`**, телематика — **`raw_telematics_data`** |
+| События | Для подписей к кодам: **`processed_common_data.event_description`** |
+| Настройки устройств | **`processed_common_data.device_settings`** (ключ–значение при полной синхронизации) |
+| Датчики по часам | **`processed_common_data.sensors_data_by_hours`**, колонка **`value_title`** — подпись значения с клиента |
+
+Инфраструктура SQL: `19_trips.sql` / `20_generate_trips.sql` вместо `18_tracks.sql` / `20_generate_tracks.sql`; переименован `02_update_description_parameters.sql`.
+

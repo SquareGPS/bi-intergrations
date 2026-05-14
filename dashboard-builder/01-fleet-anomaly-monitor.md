@@ -105,10 +105,26 @@ It helps to:
 For each `device_id`, the maximum `device_time` in `tracking_data_core` is determined. If the difference from `NOW()` exceeds 3 days, the device is classified as offline.
 
 ### Long Stops
-Periods where speed equals 0 for 24h+ are analyzed. The `LAG` window function is applied on `device_time`, partitioned by `device_id`.
+For each `device_id`, gaps between consecutive rows in `processed_common_data.trips` are computed (`LEAD(trip_start_time)` minus `trip_end_time`). If a gap is 24 hours or more within the current month, the device contributes to the long-stop KPI and table.
 
 ### Geozone Exits
-"Inside → outside" geozone transition events are counted using `ST_DWithin` (PostGIS). Vehicles with 3+ such events per month are flagged as anomalies.
+Completed visits (`processed_common_data.zone_visits` with `exit_time` set) since the start of the current month are counted per device. Vehicles with three or more such exits are flagged.
 
 ### Mileage
-Calculated using the Haversine formula between consecutive GPS points. Outliers are excluded (`ABS(lat_diff) > 1`). Coordinates are converted from scaled format (`÷ 1e7`).
+Aggregated from `processed_common_data.trips`: `SUM(trip_distance_meters)` over the selected window (for example, the last 30 days), joined to fleet objects in `raw_business_data.objects`.
+
+---
+
+## Слой данных (после рефакторинга клиентской БД)
+
+| Изменение | Суть |
+|-----------|------|
+| Схема обработки | **`processed_common_data`** вместо `business_data` |
+| Поездки | Таблица **`trips`**, поля **`trip_*`** (`trip_start_time`, `trip_distance_meters`, …) |
+| Справочники / сырые объекты | **`raw_business_data`**, телематика — **`raw_telematics_data`** |
+| События | Для подписей к кодам: **`processed_common_data.event_description`** |
+| Настройки устройств | **`processed_common_data.device_settings`** (ключ–значение при полной синхронизации) |
+| Датчики по часам | **`processed_common_data.sensors_data_by_hours`**, колонка **`value_title`** — подпись значения с клиента |
+
+Инфраструктура SQL: `19_trips.sql` / `20_generate_trips.sql` вместо `18_tracks.sql` / `20_generate_tracks.sql`; переименован `02_update_description_parameters.sql`.
+
