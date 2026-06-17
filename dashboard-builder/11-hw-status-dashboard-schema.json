@@ -3,7 +3,6 @@
   "uid": "hw-status-dashboard",
   "tags": [
     "hw-status",
-    "plug-n-play",
     "telematics",
     "sensors"
   ],
@@ -318,7 +317,7 @@
       "type": "text",
       "title": "Device Overview",
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 21
@@ -397,7 +396,7 @@
       "type": "text",
       "title": "Last 20 Telemetry Events per Device",
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 39
@@ -464,7 +463,7 @@
       "type": "text",
       "title": "Sensor Data",
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 59
@@ -528,7 +527,7 @@
       "type": "text",
       "title": "Boolean Sensors",
       "gridPos": {
-        "h": 2,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 77
@@ -600,7 +599,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH bool_meta AS (SELECT sd.device_id, sd.sensor_id, sd.sensor_label, COALESCE((sd.parameters->>'bit_index')::int, 0) AS bit_index, COALESCE(sd.parameters->>'calc_method', 'direct') AS calc_method FROM raw_business_data.sensor_description sd WHERE sd.parameters IS NOT NULL AND sd.parameters->>'calc_method' IS NOT NULL), hourly_states AS (SELECT s.device_id, s.object_label, bm.sensor_label, s.hour_bucket, MAX(CASE WHEN bm.calc_method = 'bit_index' THEN ((s.value_max::bigint >> bm.bit_index) & 1)::int ELSE CASE WHEN s.value_max >= 1 THEN 1 ELSE 0 END END) AS is_active FROM processed_common_data.sensors_data_by_hours s JOIN bool_meta bm ON bm.device_id = s.device_id AND bm.sensor_id = s.sensor_id WHERE s.hour_bucket >= NOW() - INTERVAL '7 days' AND s.hour_bucket < NOW() GROUP BY s.device_id, s.object_label, bm.sensor_label, s.hour_bucket) SELECT COALESCE(hs.object_label, 'device_' || hs.device_id) || ' — ' || hs.sensor_label AS category, SUM(hs.is_active) AS value FROM hourly_states hs GROUP BY hs.device_id, hs.object_label, hs.sensor_label HAVING SUM(hs.is_active) > 0 ORDER BY value DESC LIMIT 50"
+          "statement": "WITH bool_meta AS (SELECT sd.device_id, sd.sensor_id, sd.sensor_label, COALESCE((sd.parameters->>'bit_index')::int, 0) AS bit_index, COALESCE(sd.parameters->>'calc_method', 'direct') AS calc_method FROM raw_business_data.sensor_description sd WHERE sd.parameters IS NOT NULL AND sd.parameters->>'calc_method' IS NOT NULL), hourly_states AS (SELECT s.device_id, s.object_label, bm.sensor_label, s.hour_bucket, MAX(CASE WHEN bm.calc_method = 'bit_index' THEN ((s.value_max::bigint >> bm.bit_index) & 1)::int ELSE CASE WHEN s.value_max >= 1 THEN 1 ELSE 0 END END) AS is_active FROM processed_common_data.sensors_data_by_hours s JOIN bool_meta bm ON bm.device_id = s.device_id AND bm.sensor_id = s.sensor_id WHERE s.hour_bucket >= NOW() - INTERVAL '7 days' AND s.hour_bucket < NOW() GROUP BY s.device_id, s.object_label, bm.sensor_label, s.hour_bucket) SELECT COALESCE(hs.object_label, 'device_' || hs.device_id) || ' — ' || hs.sensor_label AS object_sensor_label, SUM(hs.is_active) AS active_hours FROM hourly_states hs GROUP BY hs.device_id, hs.object_label, hs.sensor_label HAVING SUM(hs.is_active) > 0 ORDER BY active_hours DESC LIMIT 50"
         },
         "verify": {
           "max_rows": 100
@@ -608,10 +607,10 @@
         "dataset": {
           "shape": "category_value",
           "columns": {
-            "value": {
+            "active_hours": {
               "type": "number"
             },
-            "category": {
+            "object_sensor_label": {
               "type": "string"
             }
           }
@@ -634,7 +633,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH bool_meta AS (SELECT sd.device_id, sd.sensor_id, sd.sensor_label, COALESCE((sd.parameters->>'bit_index')::int, 0) AS bit_index, COALESCE(sd.parameters->>'calc_method', 'direct') AS calc_method FROM raw_business_data.sensor_description sd WHERE sd.parameters IS NOT NULL AND sd.parameters->>'calc_method' IS NOT NULL), hourly_states AS (SELECT s.device_id, s.object_label, bm.sensor_label, s.hour_bucket, MAX(CASE WHEN bm.calc_method = 'bit_index' THEN ((s.value_max::bigint >> bm.bit_index) & 1)::int ELSE CASE WHEN s.value_max >= 1 THEN 1 ELSE 0 END END) AS is_active FROM processed_common_data.sensors_data_by_hours s JOIN bool_meta bm ON bm.device_id = s.device_id AND bm.sensor_id = s.sensor_id WHERE s.hour_bucket >= NOW() - INTERVAL '7 days' AND s.hour_bucket < NOW() GROUP BY s.device_id, s.object_label, bm.sensor_label, s.hour_bucket) SELECT COALESCE(hs.object_label, 'device_' || hs.device_id) || ' — ' || hs.sensor_label AS category, ROUND(100.0 * SUM(hs.is_active) / NULLIF(COUNT(*), 0), 1) AS value FROM hourly_states hs GROUP BY hs.device_id, hs.object_label, hs.sensor_label HAVING COUNT(*) > 0 ORDER BY value DESC LIMIT 50"
+          "statement": "WITH bool_meta AS (SELECT sd.device_id, sd.sensor_id, sd.sensor_label, COALESCE((sd.parameters->>'bit_index')::int, 0) AS bit_index, COALESCE(sd.parameters->>'calc_method', 'direct') AS calc_method FROM raw_business_data.sensor_description sd WHERE sd.parameters IS NOT NULL AND sd.parameters->>'calc_method' IS NOT NULL), hourly_states AS (SELECT s.device_id, s.object_label, bm.sensor_label, s.hour_bucket, MAX(CASE WHEN bm.calc_method = 'bit_index' THEN ((s.value_max::bigint >> bm.bit_index) & 1)::int ELSE CASE WHEN s.value_max >= 1 THEN 1 ELSE 0 END END) AS is_active FROM processed_common_data.sensors_data_by_hours s JOIN bool_meta bm ON bm.device_id = s.device_id AND bm.sensor_id = s.sensor_id WHERE s.hour_bucket >= NOW() - INTERVAL '7 days' AND s.hour_bucket < NOW() GROUP BY s.device_id, s.object_label, bm.sensor_label, s.hour_bucket) SELECT COALESCE(hs.object_label, 'device_' || hs.device_id) || ' — ' || hs.sensor_label AS object_sensor_label, ROUND(100.0 * SUM(hs.is_active) / NULLIF(COUNT(*), 0), 1) AS active_pct FROM hourly_states hs GROUP BY hs.device_id, hs.object_label, hs.sensor_label HAVING COUNT(*) > 0 ORDER BY active_pct DESC LIMIT 50"
         },
         "verify": {
           "max_rows": 100
@@ -642,10 +641,10 @@
         "dataset": {
           "shape": "category_value",
           "columns": {
-            "value": {
+            "active_pct": {
               "type": "number"
             },
-            "category": {
+            "object_sensor_label": {
               "type": "string"
             }
           }
@@ -707,7 +706,7 @@
       }
     ]
   },
-  "description": "HW Status Dashboard for Matt Watson (Plug n Play, user_id 280660). Panels: 8 KPI counters (Total/Moving/Stopped/Parked/NoSignal/Online/Standby/Offline), 2 pie charts (movement + connection status), device overview table (driver, statuses, location, freshness, satellites), last 20 telemetry events per device, current sensor readings, boolean activation table, boolean active duration + percentage bar charts.",
+  "description": "HW Status dashboard. Panels: 8 KPI counters (Total/Moving/Stopped/Parked/NoSignal/Online/Standby/Offline), 2 pie charts (movement + connection status), device overview table (driver, statuses, location, freshness, satellites), last 20 telemetry events per device, current sensor readings, boolean activation table, boolean active duration + percentage bar charts.",
   "graphTooltip": 1,
   "schemaVersion": 38
 }

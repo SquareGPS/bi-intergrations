@@ -154,7 +154,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT COALESCE(o.object_label, 'device_' || t.device_id) AS category, ROUND(COALESCE(SUM(t.trip_distance_meters), 0) / 1000.0, 2) AS value FROM raw_business_data.objects o LEFT JOIN processed_common_data.trips t ON o.device_id = t.device_id AND t.trip_start_time >= NOW() - INTERVAL '30 days' WHERE o.is_deleted IS NOT TRUE GROUP BY o.object_label, t.device_id ORDER BY value DESC LIMIT 15"
+          "statement": "SELECT COALESCE(o.object_label, 'device_' || t.device_id) AS object_label, ROUND(COALESCE(SUM(t.trip_distance_meters), 0) / 1000.0, 2) AS mileage_km FROM raw_business_data.objects o LEFT JOIN processed_common_data.trips t ON o.device_id = t.device_id AND t.trip_start_time >= NOW() - INTERVAL '30 days' WHERE o.is_deleted IS NOT TRUE GROUP BY o.object_label, t.device_id ORDER BY mileage_km DESC LIMIT 15"
         },
         "verify": {
           "max_rows": 15
@@ -162,10 +162,10 @@
         "dataset": {
           "shape": "category_value",
           "columns": {
-            "value": {
+            "mileage_km": {
               "type": "number"
             },
-            "category": {
+            "object_label": {
               "type": "string"
             }
           }
@@ -188,7 +188,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH last_activity AS (SELECT device_id, MAX(device_time) AS last_device_time FROM raw_telematics_data.tracking_data_core WHERE event_id IN (2, 802, 803, 804, 811) AND latitude <> 0 AND longitude <> 0 GROUP BY device_id), classified AS (SELECT CASE WHEN la.last_device_time IS NULL OR la.last_device_time < NOW() - INTERVAL '3 days' THEN 'Offline (3d+)' WHEN la.last_device_time < NOW() - INTERVAL '1 day' THEN 'Warning (1-3d)' ELSE 'Active (24h)' END AS status FROM raw_business_data.objects o LEFT JOIN last_activity la ON o.device_id = la.device_id WHERE o.is_deleted IS NOT TRUE) SELECT status AS category, COUNT(*) AS value FROM classified GROUP BY status ORDER BY status"
+          "statement": "WITH last_activity AS (SELECT device_id, MAX(device_time) AS last_device_time FROM raw_telematics_data.tracking_data_core WHERE event_id IN (2, 802, 803, 804, 811) AND latitude <> 0 AND longitude <> 0 GROUP BY device_id), classified AS (SELECT CASE WHEN la.last_device_time IS NULL OR la.last_device_time < NOW() - INTERVAL '3 days' THEN 'Offline (3d+)' WHEN la.last_device_time < NOW() - INTERVAL '1 day' THEN 'Warning (1-3d)' ELSE 'Active (24h)' END AS status FROM raw_business_data.objects o LEFT JOIN last_activity la ON o.device_id = la.device_id WHERE o.is_deleted IS NOT TRUE) SELECT status AS gps_status, COUNT(*) AS object_count FROM classified GROUP BY status ORDER BY status"
         },
         "verify": {
           "max_rows": 10
@@ -196,10 +196,10 @@
         "dataset": {
           "shape": "pie",
           "columns": {
-            "value": {
+            "object_count": {
               "type": "integer"
             },
-            "category": {
+            "gps_status": {
               "type": "string"
             }
           }
@@ -222,7 +222,7 @@
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "SELECT COALESCE(o.object_label, 'device_' || o.device_id) AS category, COUNT(*) AS value FROM processed_common_data.zone_visits zv JOIN raw_business_data.objects o ON o.device_id = zv.device_id WHERE o.is_deleted IS NOT TRUE AND zv.exit_time IS NOT NULL AND zv.enter_time >= DATE_TRUNC('month', NOW()) GROUP BY o.object_label, o.device_id ORDER BY value DESC LIMIT 10"
+          "statement": "SELECT COALESCE(o.object_label, 'device_' || o.device_id) AS object_label, COUNT(*) AS zone_exit_count FROM processed_common_data.zone_visits zv JOIN raw_business_data.objects o ON o.device_id = zv.device_id WHERE o.is_deleted IS NOT TRUE AND zv.exit_time IS NOT NULL AND zv.enter_time >= DATE_TRUNC('month', NOW()) GROUP BY o.object_label, o.device_id ORDER BY zone_exit_count DESC LIMIT 10"
         },
         "verify": {
           "max_rows": 10
@@ -230,10 +230,10 @@
         "dataset": {
           "shape": "category_value",
           "columns": {
-            "value": {
+            "zone_exit_count": {
               "type": "integer"
             },
-            "category": {
+            "object_label": {
               "type": "string"
             }
           }

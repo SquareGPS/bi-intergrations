@@ -1,8 +1,16 @@
 {
   "id": null,
   "uid": "driving-score-dashboard",
-  "tags": ["fleet", "driving", "safety", "score"],
-  "time": { "to": "now", "from": "now-1d" },
+  "tags": [
+    "fleet",
+    "driving",
+    "safety",
+    "score"
+  ],
+  "time": {
+    "to": "now",
+    "from": "now-1M"
+  },
   "links": [],
   "style": "dark",
   "title": "Driving Score Dashboard",
@@ -11,81 +19,173 @@
       "id": 1,
       "type": "kpi",
       "title": "Total Vehicles",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
-      "options": { "textMode": "auto", "colorMode": "value" },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "textMode": "auto",
+        "colorMode": "value"
+      },
       "x-navixy": {
         "sql": {
           "params": {},
           "statement": "SELECT COUNT(*) AS value FROM raw_business_data.objects WHERE is_deleted IS NOT TRUE"
         },
-        "verify": { "max_rows": 1 },
-        "dataset": { "shape": "kpi", "columns": { "value": { "type": "integer" } } }
+        "verify": {
+          "max_rows": 1
+        },
+        "dataset": {
+          "shape": "kpi",
+          "columns": {
+            "value": {
+              "type": "integer"
+            }
+          }
+        }
       }
     },
     {
       "id": 2,
       "type": "kpi",
-      "title": "Avg Driving Score 24h",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
-      "options": { "textMode": "auto", "colorMode": "value" },
+      "title": "Avg Driving Score",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "options": {
+        "textMode": "auto",
+        "colorMode": "value"
+      },
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH spd AS MATERIALIZED (SELECT c.device_id, c.speed/100.0 AS kmh, c.latitude/1e7::numeric AS lat, c.longitude/1e7::numeric AS lon, LAG(c.speed/100.0) OVER w AS prev_kmh, LAG(c.latitude/1e7::numeric) OVER w AS prev_lat, LAG(c.longitude/1e7::numeric) OVER w AS prev_lon, EXTRACT(EPOCH FROM (c.device_time - LAG(c.device_time) OVER w)) AS dt_sec FROM raw_telematics_data.tracking_data_core c WHERE c.device_time >= NOW() - INTERVAL '24 hours' AND c.device_time < NOW() AND c.event_id IN (2, 802, 803, 804, 811) AND c.speed IS NOT NULL AND c.latitude <> 0 AND c.longitude <> 0 AND EXISTS (SELECT 1 FROM raw_business_data.sensor_description sdc WHERE sdc.device_id = c.device_id AND sdc.sensor_type IN ('speed', 'acceleration')) WINDOW w AS (PARTITION BY c.device_id ORDER BY c.device_time)), veh_max AS (SELECT o.device_id, COALESCE(v.max_speed, 70) AS max_speed FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id WHERE o.is_deleted IS NOT TRUE), dv AS (SELECT s.device_id, COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.prev_kmh - s.kmh) / s.dt_sec >= 10) AS brake_cnt, COUNT(*) FILTER (WHERE s.prev_lat IS NOT NULL AND s.kmh >= 30 AND ABS(atan2(sin(radians(s.lon - s.prev_lon)) * cos(radians(s.lat)), cos(radians(s.prev_lat)) * sin(radians(s.lat)) - sin(radians(s.prev_lat)) * cos(radians(s.lat)) * cos(radians(s.lon - s.prev_lon))) * 180 / pi()) >= 10 AND ABS(s.kmh - s.prev_kmh) >= 5) AS turn_cnt, COUNT(*) FILTER (WHERE s.kmh > COALESCE(vm.max_speed, 70)) AS speed_cnt FROM spd s LEFT JOIN veh_max vm ON vm.device_id = s.device_id GROUP BY s.device_id), vm AS (SELECT o.device_id, ROUND(SUM(t.trip_distance_meters) / 1000.0, 2) AS mileage_km FROM raw_business_data.objects o LEFT JOIN processed_common_data.trips t ON t.device_id = o.device_id AND t.trip_start_time >= NOW() - INTERVAL '24 hours' AND t.trip_start_time < NOW() WHERE o.is_deleted IS NOT TRUE GROUP BY o.device_id HAVING COALESCE(SUM(t.trip_distance_meters), 0) > 0) SELECT ROUND(AVG(GREATEST(0, 100 - 1.0 * COALESCE(dv.brake_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(dv.turn_cnt, 0) / vm.mileage_km * 100 - 3.0 * COALESCE(dv.speed_cnt, 0) / vm.mileage_km * 100))::numeric, 1) AS value FROM vm LEFT JOIN dv ON dv.device_id = vm.device_id"
+          "statement": "WITH perf AS (SELECT hde.device_id, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance braking', 'Driver performance braking and turn')) AS brake_cnt, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance turn', 'Driver performance quick lane change')) AS turn_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'overspeeding') AS speed_cnt FROM processed_common_data.driver_performance_events hde WHERE hde.device_time >= NOW() - INTERVAL '1 month' AND hde.device_time < NOW() GROUP BY hde.device_id), vm AS (SELECT o.device_id, ROUND(SUM(t.trip_distance_meters) / 1000.0, 2) AS mileage_km FROM raw_business_data.objects o LEFT JOIN processed_common_data.trips t ON t.device_id = o.device_id AND t.trip_start_time >= NOW() - INTERVAL '1 month' AND t.trip_start_time < NOW() WHERE o.is_deleted IS NOT TRUE GROUP BY o.device_id HAVING COALESCE(SUM(t.trip_distance_meters), 0) > 0) SELECT ROUND(AVG(GREATEST(0, 100 - 1.0 * COALESCE(p.brake_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(p.turn_cnt, 0) / vm.mileage_km * 100 - 3.0 * COALESCE(p.speed_cnt, 0) / vm.mileage_km * 100))::numeric, 1) AS value FROM vm LEFT JOIN perf p ON p.device_id = vm.device_id"
         },
-        "verify": { "max_rows": 1 },
-        "dataset": { "shape": "kpi", "columns": { "value": { "type": "number" } } }
+        "verify": {
+          "max_rows": 1
+        },
+        "dataset": {
+          "shape": "kpi",
+          "columns": {
+            "value": {
+              "type": "number"
+            }
+          }
+        }
       }
     },
     {
       "id": 3,
       "type": "kpi",
-      "title": "Total Events 24h",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
-      "options": { "textMode": "auto", "colorMode": "value" },
+      "title": "Total Events",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "options": {
+        "textMode": "auto",
+        "colorMode": "value"
+      },
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH spd AS MATERIALIZED (SELECT c.device_id, c.speed/100.0 AS kmh, c.latitude/1e7::numeric AS lat, c.longitude/1e7::numeric AS lon, LAG(c.speed/100.0) OVER w AS prev_kmh, LAG(c.latitude/1e7::numeric) OVER w AS prev_lat, LAG(c.longitude/1e7::numeric) OVER w AS prev_lon, EXTRACT(EPOCH FROM (c.device_time - LAG(c.device_time) OVER w)) AS dt_sec FROM raw_telematics_data.tracking_data_core c WHERE c.device_time >= NOW() - INTERVAL '24 hours' AND c.device_time < NOW() AND c.event_id IN (2, 802, 803, 804, 811) AND c.speed IS NOT NULL AND c.latitude <> 0 AND c.longitude <> 0 AND EXISTS (SELECT 1 FROM raw_business_data.sensor_description sdc WHERE sdc.device_id = c.device_id AND sdc.sensor_type IN ('speed', 'acceleration')) WINDOW w AS (PARTITION BY c.device_id ORDER BY c.device_time)), veh_max AS (SELECT o.device_id, COALESCE(v.max_speed, 70) AS max_speed FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id WHERE o.is_deleted IS NOT TRUE) SELECT COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.kmh - s.prev_kmh) / s.dt_sec >= 10) + COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.prev_kmh - s.kmh) / s.dt_sec >= 10) + COUNT(*) FILTER (WHERE s.prev_lat IS NOT NULL AND s.kmh >= 30 AND ABS(atan2(sin(radians(s.lon - s.prev_lon)) * cos(radians(s.lat)), cos(radians(s.prev_lat)) * sin(radians(s.lat)) - sin(radians(s.prev_lat)) * cos(radians(s.lat)) * cos(radians(s.lon - s.prev_lon))) * 180 / pi()) >= 10 AND ABS(s.kmh - s.prev_kmh) >= 5) + COUNT(*) FILTER (WHERE s.kmh > COALESCE(vm.max_speed, 70)) AS value FROM spd s LEFT JOIN veh_max vm ON vm.device_id = s.device_id"
+          "statement": "SELECT COUNT(*) AS value FROM processed_common_data.driver_performance_events WHERE device_time >= NOW() - INTERVAL '1 month' AND device_time < NOW()"
         },
-        "verify": { "max_rows": 1 },
-        "dataset": { "shape": "kpi", "columns": { "value": { "type": "integer" } } }
+        "verify": {
+          "max_rows": 1
+        },
+        "dataset": {
+          "shape": "kpi",
+          "columns": {
+            "value": {
+              "type": "integer"
+            }
+          }
+        }
       }
     },
     {
       "id": 100,
       "type": "text",
       "title": "Block 1 – Vehicle Rating",
-      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 4 },
-      "options": { "mode": "markdown", "content": "## Block 1 – Vehicle Rating" }
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Block 1 – Vehicle Rating"
+      }
     },
     {
       "id": 7,
       "type": "table",
-      "title": "Vehicle Rating 1d",
-      "gridPos": { "h": 18, "w": 24, "x": 0, "y": 6 },
-      "options": { "showHeader": true },
+      "title": "Vehicle Rating",
+      "gridPos": {
+        "h": 18,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "options": {
+        "showHeader": true
+      },
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH spd AS MATERIALIZED (SELECT c.device_id, c.speed/100.0 AS kmh, c.latitude/1e7::numeric AS lat, c.longitude/1e7::numeric AS lon, LAG(c.speed/100.0) OVER w AS prev_kmh, LAG(c.latitude/1e7::numeric) OVER w AS prev_lat, LAG(c.longitude/1e7::numeric) OVER w AS prev_lon, EXTRACT(EPOCH FROM (c.device_time - LAG(c.device_time) OVER w)) AS dt_sec FROM raw_telematics_data.tracking_data_core c WHERE c.device_time >= NOW() - INTERVAL '24 hours' AND c.device_time < NOW() AND c.event_id IN (2, 802, 803, 804, 811) AND c.speed IS NOT NULL AND c.latitude <> 0 AND c.longitude <> 0 AND EXISTS (SELECT 1 FROM raw_business_data.sensor_description sdc WHERE sdc.device_id = c.device_id AND sdc.sensor_type IN ('speed', 'acceleration')) WINDOW w AS (PARTITION BY c.device_id ORDER BY c.device_time)), veh_max AS (SELECT o.device_id, COALESCE(v.max_speed, 70) AS max_speed FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id WHERE o.is_deleted IS NOT TRUE), dv AS (SELECT s.device_id, COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.kmh - s.prev_kmh) / s.dt_sec >= 10) AS accel_cnt, COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.prev_kmh - s.kmh) / s.dt_sec >= 10) AS brake_cnt, COUNT(*) FILTER (WHERE s.prev_lat IS NOT NULL AND s.kmh >= 30 AND ABS(atan2(sin(radians(s.lon - s.prev_lon)) * cos(radians(s.lat)), cos(radians(s.prev_lat)) * sin(radians(s.lat)) - sin(radians(s.prev_lat)) * cos(radians(s.lat)) * cos(radians(s.lon - s.prev_lon))) * 180 / pi()) >= 10 AND ABS(s.kmh - s.prev_kmh) >= 5) AS turn_cnt, COUNT(*) FILTER (WHERE s.kmh > COALESCE(vm.max_speed, 70)) AS speed_cnt FROM spd s LEFT JOIN veh_max vm ON vm.device_id = s.device_id GROUP BY s.device_id), raw_inputs AS MATERIALIZED (SELECT i.device_id, i.device_time, i.value, sd.sensor_type, sd.sensor_label FROM raw_telematics_data.inputs i JOIN raw_business_data.sensor_description sd ON sd.device_id = i.device_id AND sd.input_label = i.sensor_name WHERE i.device_time >= NOW() - INTERVAL '24 hours' AND i.device_time < NOW() AND sd.sensor_type IN ('rpm', 'acceleration', 'engine')), ign AS MATERIALIZED (SELECT device_id, device_time, value::int AS ign_on FROM raw_telematics_data.states WHERE state_name = 'ignition' AND device_time >= NOW() - INTERVAL '24 hours' AND device_time < NOW() UNION ALL SELECT device_id, device_time, CASE WHEN value ~ '^[1-9]' THEN 1 ELSE 0 END FROM raw_inputs WHERE sensor_type = 'engine'), iv AS (SELECT device_id, COUNT(*) AS idle_cnt FROM (SELECT device_id, device_time, ign_on, LEAD(device_time) OVER (PARTITION BY device_id ORDER BY device_time) AS next_time FROM ign) m WHERE ign_on = 1 AND next_time IS NOT NULL AND EXTRACT(EPOCH FROM (next_time - device_time)) / 60 >= 5 GROUP BY device_id), bv AS (SELECT device_id, COUNT(*) AS belt_cnt FROM raw_telematics_data.tracking_data_core WHERE device_time >= NOW() - INTERVAL '24 hours' AND device_time < NOW() AND event_id = 209 AND speed > 0 GROUP BY device_id), rv AS (SELECT device_id, COUNT(*) AS rpm_cnt FROM raw_inputs WHERE sensor_type = 'rpm' AND value ~ '^\\d+\\.?\\d*$' AND value::numeric > 5000 GROUP BY device_id), accel_hw AS (SELECT device_id, COUNT(*) AS hw_accel_cnt FROM raw_inputs WHERE sensor_type = 'acceleration' AND value ~ '^\\d+\\.?\\d*$' AND value::numeric > 2.78 GROUP BY device_id), vm AS (SELECT o.device_id, o.object_label, COALESCE(v.model, o.model, '—') AS vehicle_model, COALESCE(e.last_name || ' ' || e.first_name, '—') AS driver_name, ROUND(SUM(t.trip_distance_meters) / 1000.0, 2) AS mileage_km FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id LEFT JOIN raw_business_data.employees e ON e.object_id = o.object_id AND e.is_deleted IS NOT TRUE LEFT JOIN processed_common_data.trips t ON t.device_id = o.device_id AND t.trip_start_time >= NOW() - INTERVAL '24 hours' AND t.trip_start_time < NOW() WHERE o.is_deleted IS NOT TRUE GROUP BY o.device_id, o.object_label, v.model, o.model, e.last_name, e.first_name HAVING COALESCE(SUM(t.trip_distance_meters), 0) > 0) SELECT vm.object_label AS vehicle, vm.driver_name, vm.vehicle_model, vm.mileage_km, ROUND(3.0 * (COALESCE(dv.accel_cnt, 0) + COALESCE(accel_hw.hw_accel_cnt, 0)) / vm.mileage_km * 100, 2) AS accel_score, ROUND(1.0 * COALESCE(dv.brake_cnt, 0) / vm.mileage_km * 100, 2) AS brake_score, ROUND(1.0 * COALESCE(dv.turn_cnt, 0) / vm.mileage_km * 100, 2) AS turn_score, ROUND(1.0 * COALESCE(iv.idle_cnt, 0) / vm.mileage_km * 100, 2) AS idle_score, ROUND(1.0 * COALESCE(bv.belt_cnt, 0) / vm.mileage_km * 100, 2) AS belt_score, ROUND(1.0 * COALESCE(rv.rpm_cnt, 0) / vm.mileage_km * 100, 2) AS rpm_score, ROUND(3.0 * COALESCE(dv.speed_cnt, 0) / vm.mileage_km * 100, 2) AS speed_score, GREATEST(0, ROUND((100 - 1.0 * COALESCE(dv.brake_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(dv.turn_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(iv.idle_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(bv.belt_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(rv.rpm_cnt, 0) / vm.mileage_km * 100 - 3.0 * COALESCE(dv.speed_cnt, 0) / vm.mileage_km * 100)::numeric, 2)) AS total_score FROM vm LEFT JOIN dv ON dv.device_id = vm.device_id LEFT JOIN iv ON iv.device_id = vm.device_id LEFT JOIN bv ON bv.device_id = vm.device_id LEFT JOIN rv ON rv.device_id = vm.device_id LEFT JOIN accel_hw ON accel_hw.device_id = vm.device_id ORDER BY total_score DESC LIMIT 500"
+          "statement": "WITH perf AS (SELECT hde.device_id, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance acceleration', 'Driver performance acceleration and turn')) AS accel_cnt, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance braking', 'Driver performance braking and turn')) AS brake_cnt, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance turn', 'Driver performance quick lane change')) AS turn_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'overspeeding') AS speed_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'idle over 5 min' AND hde.extra_value >= 1500) AS idle_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'seatbelt') AS belt_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'rpm exceeded') AS rpm_cnt FROM processed_common_data.driver_performance_events hde WHERE hde.device_time >= NOW() - INTERVAL '1 month' AND hde.device_time < NOW() GROUP BY hde.device_id), vm AS (SELECT o.device_id, o.object_label, COALESCE(v.model, o.model, '—') AS vehicle_model, COALESCE(e.last_name || ' ' || e.first_name, '—') AS driver_name, ROUND(SUM(t.trip_distance_meters) / 1000.0, 2) AS mileage_km FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id LEFT JOIN raw_business_data.employees e ON e.object_id = o.object_id AND e.is_deleted IS NOT TRUE LEFT JOIN processed_common_data.trips t ON t.device_id = o.device_id AND t.trip_start_time >= NOW() - INTERVAL '1 month' AND t.trip_start_time < NOW() WHERE o.is_deleted IS NOT TRUE GROUP BY o.device_id, o.object_label, v.model, o.model, e.last_name, e.first_name HAVING COALESCE(SUM(t.trip_distance_meters), 0) > 0) SELECT vm.object_label AS vehicle, vm.driver_name, vm.vehicle_model, vm.mileage_km, ROUND(3.0 * COALESCE(p.accel_cnt, 0) / vm.mileage_km * 100, 2) AS accel_score, ROUND(1.0 * COALESCE(p.brake_cnt, 0) / vm.mileage_km * 100, 2) AS brake_score, ROUND(1.0 * COALESCE(p.turn_cnt, 0) / vm.mileage_km * 100, 2) AS turn_score, ROUND(1.0 * COALESCE(p.idle_cnt, 0) / vm.mileage_km * 100, 2) AS idle_score, ROUND(1.0 * COALESCE(p.belt_cnt, 0) / vm.mileage_km * 100, 2) AS belt_score, ROUND(1.0 * COALESCE(p.rpm_cnt, 0) / vm.mileage_km * 100, 2) AS rpm_score, ROUND(3.0 * COALESCE(p.speed_cnt, 0) / vm.mileage_km * 100, 2) AS speed_score, GREATEST(0, ROUND((100 - 1.0 * COALESCE(p.brake_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(p.turn_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(p.idle_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(p.belt_cnt, 0) / vm.mileage_km * 100 - 1.0 * COALESCE(p.rpm_cnt, 0) / vm.mileage_km * 100 - 3.0 * COALESCE(p.speed_cnt, 0) / vm.mileage_km * 100)::numeric, 2)) AS total_score FROM vm LEFT JOIN perf p ON p.device_id = vm.device_id ORDER BY total_score DESC"
         },
-        "verify": { "max_rows": 500 },
+        "verify": {
+          "max_rows": 500
+        },
         "dataset": {
           "shape": "table",
           "columns": {
-            "vehicle": { "type": "string" },
-            "driver_name": { "type": "string" },
-            "vehicle_model": { "type": "string" },
-            "mileage_km": { "type": "number" },
-            "accel_score": { "type": "number" },
-            "brake_score": { "type": "number" },
-            "turn_score": { "type": "number" },
-            "idle_score": { "type": "number" },
-            "belt_score": { "type": "number" },
-            "rpm_score": { "type": "number" },
-            "speed_score": { "type": "number" },
-            "total_score": { "type": "number" }
+            "vehicle": {
+              "type": "string"
+            },
+            "rpm_score": {
+              "type": "number"
+            },
+            "belt_score": {
+              "type": "number"
+            },
+            "idle_score": {
+              "type": "number"
+            },
+            "mileage_km": {
+              "type": "number"
+            },
+            "turn_score": {
+              "type": "number"
+            },
+            "accel_score": {
+              "type": "number"
+            },
+            "brake_score": {
+              "type": "number"
+            },
+            "driver_name": {
+              "type": "string"
+            },
+            "speed_score": {
+              "type": "number"
+            },
+            "total_score": {
+              "type": "number"
+            },
+            "vehicle_model": {
+              "type": "string"
+            }
           }
         }
       }
@@ -94,34 +194,71 @@
       "id": 200,
       "type": "text",
       "title": "Block 2 – Violation Counts",
-      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 24 },
-      "options": { "mode": "markdown", "content": "## Block 2 – Violation Counts" }
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Block 2 – Violation Counts"
+      }
     },
     {
       "id": 17,
       "type": "table",
-      "title": "Violation Counts 1d",
-      "gridPos": { "h": 18, "w": 24, "x": 0, "y": 26 },
-      "options": { "showHeader": true },
+      "title": "Violation Counts",
+      "gridPos": {
+        "h": 18,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "options": {
+        "showHeader": true
+      },
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH spd AS MATERIALIZED (SELECT c.device_id, c.speed/100.0 AS kmh, c.latitude/1e7::numeric AS lat, c.longitude/1e7::numeric AS lon, LAG(c.speed/100.0) OVER w AS prev_kmh, LAG(c.latitude/1e7::numeric) OVER w AS prev_lat, LAG(c.longitude/1e7::numeric) OVER w AS prev_lon, EXTRACT(EPOCH FROM (c.device_time - LAG(c.device_time) OVER w)) AS dt_sec FROM raw_telematics_data.tracking_data_core c WHERE c.device_time >= NOW() - INTERVAL '24 hours' AND c.device_time < NOW() AND c.event_id IN (2, 802, 803, 804, 811) AND c.speed IS NOT NULL AND c.latitude <> 0 AND c.longitude <> 0 AND EXISTS (SELECT 1 FROM raw_business_data.sensor_description sdc WHERE sdc.device_id = c.device_id AND sdc.sensor_type IN ('speed', 'acceleration')) WINDOW w AS (PARTITION BY c.device_id ORDER BY c.device_time)), veh_max AS (SELECT o.device_id, COALESCE(v.max_speed, 70) AS max_speed FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id WHERE o.is_deleted IS NOT TRUE), dv AS (SELECT s.device_id, COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.kmh - s.prev_kmh) / s.dt_sec >= 10) AS accel_cnt, COUNT(*) FILTER (WHERE s.prev_kmh IS NOT NULL AND s.dt_sec > 0 AND s.dt_sec <= 120 AND (s.prev_kmh - s.kmh) / s.dt_sec >= 10) AS brake_cnt, COUNT(*) FILTER (WHERE s.prev_lat IS NOT NULL AND s.kmh >= 30 AND ABS(atan2(sin(radians(s.lon - s.prev_lon)) * cos(radians(s.lat)), cos(radians(s.prev_lat)) * sin(radians(s.lat)) - sin(radians(s.prev_lat)) * cos(radians(s.lat)) * cos(radians(s.lon - s.prev_lon))) * 180 / pi()) >= 10 AND ABS(s.kmh - s.prev_kmh) >= 5) AS turn_cnt, COUNT(*) FILTER (WHERE s.kmh > COALESCE(vm.max_speed, 70)) AS speed_cnt FROM spd s LEFT JOIN veh_max vm ON vm.device_id = s.device_id GROUP BY s.device_id), raw_inputs AS MATERIALIZED (SELECT i.device_id, i.device_time, i.value, sd.sensor_type, sd.sensor_label FROM raw_telematics_data.inputs i JOIN raw_business_data.sensor_description sd ON sd.device_id = i.device_id AND sd.input_label = i.sensor_name WHERE i.device_time >= NOW() - INTERVAL '24 hours' AND i.device_time < NOW() AND sd.sensor_type IN ('rpm', 'acceleration', 'engine')), ign AS MATERIALIZED (SELECT device_id, device_time, value::int AS ign_on FROM raw_telematics_data.states WHERE state_name = 'ignition' AND device_time >= NOW() - INTERVAL '24 hours' AND device_time < NOW() UNION ALL SELECT device_id, device_time, CASE WHEN value ~ '^[1-9]' THEN 1 ELSE 0 END FROM raw_inputs WHERE sensor_type = 'engine'), iv AS (SELECT device_id, COUNT(*) AS idle_cnt FROM (SELECT device_id, device_time, ign_on, LEAD(device_time) OVER (PARTITION BY device_id ORDER BY device_time) AS next_time FROM ign) m WHERE ign_on = 1 AND next_time IS NOT NULL AND EXTRACT(EPOCH FROM (next_time - device_time)) / 60 >= 5 GROUP BY device_id), bv AS (SELECT device_id, COUNT(*) AS belt_cnt FROM raw_telematics_data.tracking_data_core WHERE device_time >= NOW() - INTERVAL '24 hours' AND device_time < NOW() AND event_id = 209 AND speed > 0 GROUP BY device_id), rv AS (SELECT device_id, COUNT(*) AS rpm_cnt FROM raw_inputs WHERE sensor_type = 'rpm' AND value ~ '^\\d+\\.?\\d*$' AND value::numeric > 5000 GROUP BY device_id), accel_hw AS (SELECT device_id, COUNT(*) AS hw_accel_cnt FROM raw_inputs WHERE sensor_type = 'acceleration' AND value ~ '^\\d+\\.?\\d*$' AND value::numeric > 2.78 GROUP BY device_id), vi AS (SELECT o.device_id, o.object_label, COALESCE(e.last_name || ' ' || e.first_name, '—') AS driver_name, COALESCE(g.group_label, '—') AS group_label FROM raw_business_data.objects o LEFT JOIN raw_business_data.employees e ON e.object_id = o.object_id AND e.is_deleted IS NOT TRUE LEFT JOIN raw_business_data.groups g ON g.group_id = o.group_id WHERE o.is_deleted IS NOT TRUE) SELECT vi.object_label AS vehicle, vi.driver_name, vi.group_label, COALESCE(dv.accel_cnt, 0) + COALESCE(accel_hw.hw_accel_cnt, 0) AS acceleration, COALESCE(dv.brake_cnt, 0) AS braking, COALESCE(dv.turn_cnt, 0) AS sharp_turn, COALESCE(iv.idle_cnt, 0) AS idle, COALESCE(bv.belt_cnt, 0) AS seatbelt, COALESCE(rv.rpm_cnt, 0) AS rpm_exceeded, COALESCE(dv.speed_cnt, 0) AS speeding FROM vi LEFT JOIN dv ON dv.device_id = vi.device_id LEFT JOIN iv ON iv.device_id = vi.device_id LEFT JOIN bv ON bv.device_id = vi.device_id LEFT JOIN rv ON rv.device_id = vi.device_id LEFT JOIN accel_hw ON accel_hw.device_id = vi.device_id WHERE COALESCE(dv.accel_cnt, 0) + COALESCE(accel_hw.hw_accel_cnt, 0) + COALESCE(dv.brake_cnt, 0) + COALESCE(dv.turn_cnt, 0) + COALESCE(iv.idle_cnt, 0) + COALESCE(bv.belt_cnt, 0) + COALESCE(rv.rpm_cnt, 0) + COALESCE(dv.speed_cnt, 0) > 0 ORDER BY COALESCE(dv.accel_cnt, 0) + COALESCE(accel_hw.hw_accel_cnt, 0) + COALESCE(dv.brake_cnt, 0) + COALESCE(dv.turn_cnt, 0) + COALESCE(iv.idle_cnt, 0) + COALESCE(bv.belt_cnt, 0) + COALESCE(rv.rpm_cnt, 0) + COALESCE(dv.speed_cnt, 0) DESC LIMIT 500"
+          "statement": "WITH perf AS (SELECT hde.device_id, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance acceleration', 'Driver performance acceleration and turn')) AS accel_cnt, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance braking', 'Driver performance braking and turn')) AS brake_cnt, COUNT(*) FILTER (WHERE hde.event_type IN ('Driver performance turn', 'Driver performance quick lane change')) AS turn_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'overspeeding') AS speed_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'idle over 5 min' AND hde.extra_value >= 1500) AS idle_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'seatbelt') AS belt_cnt, COUNT(*) FILTER (WHERE hde.event_type = 'rpm exceeded') AS rpm_cnt FROM processed_common_data.driver_performance_events hde WHERE hde.device_time >= NOW() - INTERVAL '1 month' AND hde.device_time < NOW() GROUP BY hde.device_id), vi AS (SELECT o.device_id, o.object_label, COALESCE(e.last_name || ' ' || e.first_name, '—') AS driver_name, COALESCE(g.group_label, '—') AS group_label FROM raw_business_data.objects o LEFT JOIN raw_business_data.employees e ON e.object_id = o.object_id AND e.is_deleted IS NOT TRUE LEFT JOIN raw_business_data.groups g ON g.group_id = o.group_id WHERE o.is_deleted IS NOT TRUE) SELECT vi.object_label AS vehicle, vi.driver_name, vi.group_label, COALESCE(p.accel_cnt, 0) AS acceleration, COALESCE(p.brake_cnt, 0) AS braking, COALESCE(p.turn_cnt, 0) AS sharp_turn, COALESCE(p.idle_cnt, 0) AS idle, COALESCE(p.belt_cnt, 0) AS seatbelt, COALESCE(p.rpm_cnt, 0) AS rpm_exceeded, COALESCE(p.speed_cnt, 0) AS speeding FROM vi LEFT JOIN perf p ON p.device_id = vi.device_id WHERE COALESCE(p.accel_cnt, 0) + COALESCE(p.brake_cnt, 0) + COALESCE(p.turn_cnt, 0) + COALESCE(p.idle_cnt, 0) + COALESCE(p.belt_cnt, 0) + COALESCE(p.rpm_cnt, 0) + COALESCE(p.speed_cnt, 0) > 0 ORDER BY COALESCE(p.accel_cnt, 0) + COALESCE(p.brake_cnt, 0) + COALESCE(p.turn_cnt, 0) + COALESCE(p.idle_cnt, 0) + COALESCE(p.belt_cnt, 0) + COALESCE(p.rpm_cnt, 0) + COALESCE(p.speed_cnt, 0) DESC"
         },
-        "verify": { "max_rows": 500 },
+        "verify": {
+          "max_rows": 500
+        },
         "dataset": {
           "shape": "table",
           "columns": {
-            "vehicle": { "type": "string" },
-            "driver_name": { "type": "string" },
-            "group_label": { "type": "string" },
-            "acceleration": { "type": "integer" },
-            "braking": { "type": "integer" },
-            "sharp_turn": { "type": "integer" },
-            "idle": { "type": "integer" },
-            "seatbelt": { "type": "integer" },
-            "rpm_exceeded": { "type": "integer" },
-            "speeding": { "type": "integer" }
+            "idle": {
+              "type": "integer"
+            },
+            "braking": {
+              "type": "integer"
+            },
+            "vehicle": {
+              "type": "string"
+            },
+            "seatbelt": {
+              "type": "integer"
+            },
+            "speeding": {
+              "type": "integer"
+            },
+            "sharp_turn": {
+              "type": "integer"
+            },
+            "driver_name": {
+              "type": "string"
+            },
+            "group_label": {
+              "type": "string"
+            },
+            "acceleration": {
+              "type": "integer"
+            },
+            "rpm_exceeded": {
+              "type": "integer"
+            }
           }
         }
       }
@@ -130,33 +267,68 @@
       "id": 300,
       "type": "text",
       "title": "Block 3 – Violations Detail",
-      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 44 },
-      "options": { "mode": "markdown", "content": "## Block 3 – Violations Detail" }
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Block 3 – Violations Detail"
+      }
     },
     {
       "id": 23,
       "type": "table",
-      "title": "Violations Detail 1d",
-      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 46 },
-      "options": { "showHeader": true },
+      "title": "Violations Detail",
+      "gridPos": {
+        "h": 20,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "options": {
+        "showHeader": true
+      },
       "x-navixy": {
         "sql": {
           "params": {},
-          "statement": "WITH spd AS MATERIALIZED (SELECT c.device_id, c.device_time, c.speed/100.0 AS kmh, c.latitude/1e7::numeric AS lat, c.longitude/1e7::numeric AS lon, LAG(c.speed/100.0) OVER w AS prev_kmh, LAG(c.latitude/1e7::numeric) OVER w AS prev_lat, LAG(c.longitude/1e7::numeric) OVER w AS prev_lon, EXTRACT(EPOCH FROM (c.device_time - LAG(c.device_time) OVER w)) AS dt_sec FROM raw_telematics_data.tracking_data_core c WHERE c.device_time >= NOW() - INTERVAL '24 hours' AND c.device_time < NOW() AND c.event_id IN (2, 802, 803, 804, 811) AND c.speed IS NOT NULL AND c.latitude <> 0 AND c.longitude <> 0 AND EXISTS (SELECT 1 FROM raw_business_data.sensor_description sdc WHERE sdc.device_id = c.device_id AND sdc.sensor_type IN ('speed', 'acceleration')) WINDOW w AS (PARTITION BY c.device_id ORDER BY c.device_time)), veh_max AS (SELECT o.device_id, COALESCE(v.max_speed, 70) AS max_speed FROM raw_business_data.objects o LEFT JOIN raw_business_data.vehicles v ON v.object_id = o.object_id WHERE o.is_deleted IS NOT TRUE), raw_inputs AS MATERIALIZED (SELECT i.device_id, i.device_time, i.value, sd.sensor_type, sd.sensor_label FROM raw_telematics_data.inputs i JOIN raw_business_data.sensor_description sd ON sd.device_id = i.device_id AND sd.input_label = i.sensor_name WHERE i.device_time >= NOW() - INTERVAL '24 hours' AND i.device_time < NOW() AND sd.sensor_type IN ('rpm', 'acceleration', 'engine')), ign AS MATERIALIZED (SELECT device_id, device_time, value::int AS ign_on FROM raw_telematics_data.states WHERE state_name = 'ignition' AND device_time >= NOW() - INTERVAL '24 hours' AND device_time < NOW() UNION ALL SELECT device_id, device_time, CASE WHEN value ~ '^[1-9]' THEN 1 ELSE 0 END FROM raw_inputs WHERE sensor_type = 'engine'), idle_calc AS (SELECT device_id, device_time, ign_on, LEAD(device_time) OVER (PARTITION BY device_id ORDER BY device_time) AS next_time FROM ign), obj AS (SELECT o.device_id, o.object_label, COALESCE(e.last_name || ' ' || e.first_name, '—') AS driver_name, COALESCE(g.group_label, '—') AS group_label FROM raw_business_data.objects o LEFT JOIN raw_business_data.employees e ON e.object_id = o.object_id AND e.is_deleted IS NOT TRUE LEFT JOIN raw_business_data.groups g ON g.group_id = o.group_id WHERE o.is_deleted IS NOT TRUE), events AS (SELECT s.device_time AS vtime, s.device_id, 'Speeding' AS event, 'Limit ' || vm.max_speed::int || ' km/h, actual ' || ROUND(s.kmh::numeric, 0)::int || ' km/h' AS violation_type, ROUND(s.lat::numeric, 6) AS lat, ROUND(s.lon::numeric, 6) AS lon, ROUND(s.kmh::numeric, 2) AS speed_kmh FROM spd s JOIN veh_max vm ON vm.device_id = s.device_id WHERE s.kmh > vm.max_speed UNION ALL SELECT device_time, device_id, 'Harsh Acceleration', 'Acceleration ' || ROUND(((kmh - prev_kmh) / dt_sec)::numeric, 1) || ' km/h/s', ROUND(lat::numeric, 6), ROUND(lon::numeric, 6), ROUND(kmh::numeric, 2) FROM spd WHERE prev_kmh IS NOT NULL AND dt_sec > 0 AND dt_sec <= 120 AND (kmh - prev_kmh) / dt_sec >= 10 UNION ALL SELECT device_time, device_id, 'Harsh Braking', 'Braking ' || ROUND(((prev_kmh - kmh) / dt_sec)::numeric, 1) || ' km/h/s', ROUND(lat::numeric, 6), ROUND(lon::numeric, 6), ROUND(kmh::numeric, 2) FROM spd WHERE prev_kmh IS NOT NULL AND dt_sec > 0 AND dt_sec <= 120 AND (prev_kmh - kmh) / dt_sec >= 10 UNION ALL SELECT device_time, device_id, 'Sharp Turn', 'Heading change >=10 deg', ROUND(lat::numeric, 6), ROUND(lon::numeric, 6), ROUND(kmh::numeric, 2) FROM spd WHERE prev_lat IS NOT NULL AND kmh >= 30 AND ABS(atan2(sin(radians(lon - prev_lon)) * cos(radians(lat)), cos(radians(prev_lat)) * sin(radians(lat)) - sin(radians(prev_lat)) * cos(radians(lat)) * cos(radians(lon - prev_lon))) * 180 / pi()) >= 10 AND ABS(kmh - prev_kmh) >= 5 UNION ALL SELECT device_time, device_id, 'Idling', 'Idle ' || ROUND((EXTRACT(EPOCH FROM (next_time - device_time)) / 60)::numeric, 0)::int || ' min', NULL::numeric, NULL::numeric, NULL::numeric FROM idle_calc WHERE ign_on = 1 AND next_time IS NOT NULL AND EXTRACT(EPOCH FROM (next_time - device_time)) / 60 >= 5 UNION ALL SELECT c.device_time, c.device_id, 'Seatbelt', 'Moving without seatbelt', ROUND((c.latitude/1e7::numeric)::numeric, 6), ROUND((c.longitude/1e7::numeric)::numeric, 6), ROUND((c.speed/100.0)::numeric, 2) FROM raw_telematics_data.tracking_data_core c WHERE c.device_time >= NOW() - INTERVAL '24 hours' AND c.device_time < NOW() AND c.event_id = 209 AND c.speed > 0 UNION ALL SELECT device_time, device_id, 'RPM Exceeded', 'RPM ' || ROUND(value::numeric, 0)::int, NULL::numeric, NULL::numeric, NULL::numeric FROM raw_inputs WHERE sensor_type = 'rpm' AND value ~ '^\\d+\\.?\\d*$' AND value::numeric > 5000 UNION ALL SELECT device_time, device_id, 'Harsh Acceleration (sensor)', 'HW ' || ROUND(value::numeric, 2) || ' m/s2', NULL::numeric, NULL::numeric, NULL::numeric FROM raw_inputs WHERE sensor_type = 'acceleration' AND value ~ '^\\d+\\.?\\d*$' AND value::numeric > 2.78) SELECT to_char(e.vtime, 'YYYY-MM-DD HH24:MI:SS') AS violation_time, o.group_label, e.event, e.violation_type, e.lat AS latitude, e.lon AS longitude, e.speed_kmh, o.driver_name, COALESCE(o.object_label, 'device_' || e.device_id) AS vehicle FROM events e JOIN obj o ON o.device_id = e.device_id ORDER BY e.vtime DESC LIMIT 500"
+          "statement": "WITH obj AS (SELECT o.device_id, o.object_label, COALESCE(e.last_name || ' ' || e.first_name, '—') AS driver_name, COALESCE(g.group_label, '—') AS group_label FROM raw_business_data.objects o LEFT JOIN raw_business_data.employees e ON e.object_id = o.object_id AND e.is_deleted IS NOT TRUE LEFT JOIN raw_business_data.groups g ON g.group_id = o.group_id WHERE o.is_deleted IS NOT TRUE) SELECT to_char(hde.device_time, 'YYYY-MM-DD HH24:MI:SS') AS violation_time, o.group_label, CASE WHEN hde.event_type = 'overspeeding' THEN 'Speeding' WHEN hde.event_type = 'idle over 5 min' THEN 'Idling' WHEN hde.event_type = 'seatbelt' THEN 'Seatbelt' WHEN hde.event_type = 'rpm exceeded' THEN 'RPM Exceeded' ELSE hde.event_type END AS event, CASE WHEN hde.event_type = 'overspeeding' THEN ROUND(hde.speed_kmh, 1)::text || ' km/h' WHEN hde.event_type = 'idle over 5 min' THEN 'Idle ' || COALESCE(ROUND(hde.extra_value / 60.0)::int::text || ' min', '?') WHEN hde.event_type = 'seatbelt' THEN 'Moving without seatbelt at ' || ROUND(hde.speed_kmh, 1)::text || ' km/h' WHEN hde.event_type = 'rpm exceeded' THEN 'RPM ' || COALESCE(ROUND(hde.extra_value)::int::text, '> 5000') ELSE COALESCE(ROUND(hde.speed_kmh, 1)::text || ' km/h', '—') END AS violation_type, ROUND(hde.latitude::numeric, 6) AS latitude, ROUND(hde.longitude::numeric, 6) AS longitude, hde.speed_kmh, o.driver_name, COALESCE(o.object_label, 'device_' || hde.device_id) AS vehicle FROM processed_common_data.driver_performance_events hde JOIN obj o ON o.device_id = hde.device_id WHERE hde.device_time >= NOW() - INTERVAL '1 month' AND hde.device_time < NOW() AND NOT (hde.event_type = 'idle over 5 min' AND hde.extra_value < 1500) ORDER BY hde.device_time DESC"
         },
-        "verify": { "max_rows": 500 },
+        "verify": {
+          "max_rows": 500
+        },
         "dataset": {
           "shape": "table",
           "columns": {
-            "violation_time": { "type": "string" },
-            "group_label": { "type": "string" },
-            "event": { "type": "string" },
-            "violation_type": { "type": "string" },
-            "latitude": { "type": "number" },
-            "longitude": { "type": "number" },
-            "speed_kmh": { "type": "number" },
-            "driver_name": { "type": "string" },
-            "vehicle": { "type": "string" }
+            "event": {
+              "type": "string"
+            },
+            "vehicle": {
+              "type": "string"
+            },
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            },
+            "speed_kmh": {
+              "type": "number"
+            },
+            "driver_name": {
+              "type": "string"
+            },
+            "group_label": {
+              "type": "string"
+            },
+            "violation_time": {
+              "type": "string"
+            },
+            "violation_type": {
+              "type": "string"
+            }
           }
         }
       }
@@ -174,17 +346,36 @@
       "read_only": true,
       "timeout_ms": 60000
     },
-    "parameters": { "bindings": {} },
+    "parameters": {
+      "bindings": {}
+    },
     "schemaVersion": "1.0.0"
   },
-  "templating": { "list": [], "enable": false },
+  "templating": {
+    "list": [],
+    "enable": false
+  },
   "timepicker": {
     "now": true,
     "enable": true,
     "hidden": false,
     "collapse": false,
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "7d", "30d"],
-    "refresh_intervals": ["10s", "30s", "1m", "5m"]
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "7d",
+      "30d"
+    ],
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
   },
   "annotations": {
     "list": [
@@ -198,7 +389,7 @@
       }
     ]
   },
-  "description": "Driving Score Dashboard — 3 tables: Vehicle Rating, Violation Counts, Violations Detail. TimescaleDB optimized: MATERIALIZED CTEs for spd/raw_inputs/ign; explicit upper bound device_time < NOW() for precise chunk exclusion; each TimescaleDB table scanned exactly once per query.",
+  "description": "Driving Score Dashboard — single data source: processed_common_data.driver_performance_events. 3 blocks: Vehicle Rating (score per km), Violation Counts (raw counts), Violations Detail (individual events). No hypertable scans — all violations pre-aggregated by triggers on tracking_data_core, states, inputs.",
   "graphTooltip": 1,
   "schemaVersion": 38
 }
